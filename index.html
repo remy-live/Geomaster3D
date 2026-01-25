@@ -1557,11 +1557,24 @@
 
         toast(m) { this.pill.innerText = m; this.pill.classList.add('show'); clearTimeout(this.to); this.to = setTimeout(() => this.pill.classList.remove('show'), 3000); }
 
-        toggleGrid() {
-            const types = ['dots', 'squares', 'iso', 'none']; const labels = ['Grille: Points', 'Grille: Carreaux', 'Grille: Iso', 'Grille: Aucune'];
-            let idx = types.indexOf(this.gridType); idx = (idx + 1) % types.length; this.gridType = types[idx];
-            document.getElementById('lbl-grid').innerText = labels[idx];
-            if (this.gridType === 'dots') this.bgRect.setAttribute('fill', 'url(#pat-dots)'); else if (this.gridType === 'squares') this.bgRect.setAttribute('fill', 'url(#pat-squares)'); else if (this.gridType === 'iso') this.bgRect.setAttribute('fill', 'url(#pat-iso)'); else this.bgRect.setAttribute('fill', 'white');
+    toggleGrid() {
+            const types = ['dots', 'squares', 'iso', 'none'];
+            // Labels pour le tooltip (infobulle)
+            const labels = ['Grille: Points', 'Grille: Carreaux', 'Grille: Iso', 'Grille: Aucune'];
+            
+            let idx = types.indexOf(this.gridType); 
+            idx = (idx + 1) % types.length; 
+            this.gridType = types[idx];
+            
+            // CORRECTION : On ne cherche plus à modifier 'lbl-grid' car il n'existe plus.
+            // À la place, on met à jour le titre du bouton pour l'infobulle
+            const btn = document.querySelector('button[onclick="app.toggleGrid()"]');
+            if(btn) btn.title = labels[idx];
+
+            if(this.gridType === 'dots') this.bgRect.setAttribute('fill', 'url(#pat-dots)'); 
+            else if(this.gridType === 'squares') this.bgRect.setAttribute('fill', 'url(#pat-squares)'); 
+            else if(this.gridType === 'iso') this.bgRect.setAttribute('fill', 'url(#pat-iso)'); 
+            else this.bgRect.setAttribute('fill', 'white');
         }
 
         updateView() { this.scene.setAttribute('transform', `translate(${this.view.x},${this.view.y}) scale(${this.view.z})`); }
