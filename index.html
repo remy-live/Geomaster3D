@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -955,6 +956,11 @@
                 <circle cx="15" cy="13" r="1.5" fill="currentColor" stroke="none" />
             </svg>
         </button>
+		<button class="h-btn" id="btn-pt-style" onclick="app.cyclePointStyle()" title="Style des points (Défaut)">
+    <svg viewBox="0 0 24 24" id="icon-pt-style">
+        <path d="M8 8L16 16M16 8L8 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+</button>
         <button class="h-btn" onclick="openDonateModal()" title="Soutenir le projet"
             style="color:#FF3B30; margin-left:auto;">
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -1128,11 +1134,20 @@
                         <div class="menu-separator"></div>
                     </div>
 
-                    <div id="menu-style-point" style="display:none">
-                        <div class="menu-item" onclick="app.menuAction('pstyle', 'cross')">Croix (×)</div>
-                        <div class="menu-item" onclick="app.menuAction('pstyle', 'dot')">Rond (●)</div>
-                        <div class="menu-separator"></div>
-                    </div>
+              <div id="menu-style-point" style="display:none">
+    <div class="menu-slider-label">Forme du point</div>
+    <div class="mark-grid"> <div class="icon-btn" onclick="app.menuAction('pstyle', 'cross')" title="Croix">
+            <svg viewBox="0 0 24 24"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2"/></svg>
+        </div>
+        <div class="icon-btn" onclick="app.menuAction('pstyle', 'dot')" title="Rond">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="currentColor"/></svg>
+        </div>
+        <div class="icon-btn" onclick="app.menuAction('pstyle', 'pixel')" title="Pixel">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+        </div>
+    </div>
+    <div class="menu-separator"></div>
+</div>
 
                     <div id="menu-style-face" style="display:none">
                         <div class="menu-slider-container">
@@ -1223,6 +1238,18 @@
     const MARK_TYPES = ['none', 'simple', 'double', 'triple', 'cross', 'cross2', 'cross3', 'circle', 'circle2', 'circle3'];
 
     class Utils {
+	static drawPointShape(g, x, y, style, color) {
+        if (style === 'dot') {
+            // Rond
+            g.appendChild(Utils.createEl("circle", { cx: x, cy: y, r: 4, fill: color }));
+        } else if (style === 'pixel') {
+            // Pixel
+            g.appendChild(Utils.createEl("circle", { cx: x, cy: y, r: 2, fill: color }));
+        } else {
+            // Croix (par défaut)
+            Utils.createCross(g, x, y, 4, color);
+        }
+    }
         static isFaceVisible(v) { let s = 0; for (let i = 0; i < v.length; i++) { const p1 = v[i], p2 = v[(i + 1) % v.length]; s += (p2.x - p1.x) * (p2.y + p1.y); } return s < 0; }
         static createEl(t, a) { const e = document.createElementNS("http://www.w3.org/2000/svg", t); for (const [k, v] of Object.entries(a)) e.setAttribute(k, v); return e; }
         static dist(p1, p2) { return Math.hypot(p2.x - p1.x, p2.y - p1.y); }
@@ -1344,49 +1371,88 @@
         getData() { return { type: 'polyface', vertices: this.vertices, color: this.color, opacity: this.opacity, hasBorder: this.hasBorder, fillStyle: this.fillStyle }; }
     }
 
-    class FreePoint extends Solid {
-        constructor(p, labelOverride) { super(); this.p = p; this.labels = [{ t: labelOverride || "", ang: -Math.PI / 4, dist: 20 }]; this.pStyle = 'cross'; }
-        getSnapPoints() { return [this.p]; }
-        render(g, l, idx) {
-            const el = Utils.createEl("g", { "data-id": this.id, class: "solid-group" });
-            el.style.setProperty('--stroke-color', this.color);
-            if (this.selected) el.classList.add("selected");
-            if (this.pStyle === 'dot') {
-                const pt = Utils.createEl("circle", { cx: this.p.x, cy: this.p.y, r: 4, fill: this.color, class: "face" }); el.appendChild(pt);
-            } else { Utils.createCross(el, this.p.x, this.p.y, 4, this.color); }
-            const hit = Utils.createEl("circle", { cx: this.p.x, cy: this.p.y, r: 10, fill: "transparent", stroke: "none" }); el.appendChild(hit);
-            g.appendChild(el); return l ? this.renderLabels(g, [this.p], idx) : idx;
-        }
-        renderHandles(g) { g.appendChild(Utils.createEl("circle", { cx: this.p.x, cy: this.p.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id })); }
-        moveHandle(i, p) { this.p = p; }
-        moveLabel(i, p) { const dx = p.x - this.p.x; const dy = p.y - this.p.y; this.labels[0].ang = Math.atan2(dy, dx); this.labels[0].dist = Math.sqrt(dx * dx + dy * dy); }
-        getData() { return { type: 'freepoint', p: this.p, color: this.color, labels: this.labels, pStyle: this.pStyle }; }
+ class FreePoint extends Solid {
+    constructor(p, labelOverride) {
+        super();
+        this.p = p;
+        this.labels = [{ t: labelOverride || "", ang: -Math.PI / 4, dist: 20 }];
+        // Définit le style par défaut (Cross si non défini)
+        this.pStyle = (typeof app !== 'undefined' && app.defaultPointStyle) ? app.defaultPointStyle : 'cross';
     }
 
-    class Segment extends Solid {
-        constructor(p1, p2, l1, l2) {
-            super();
-            this.p1 = p1; this.p2 = p2;
-            this.labels = [{ t: l1 || "", ang: -Math.PI / 4, dist: 20 }, { t: l2 || "", ang: -Math.PI / 4, dist: 20 }];
-            this.lineStyle = 'solid'; this.mark = 'none';
-        }
-        getSnapPoints() { return [this.p1, this.p2]; }
-        render(g, l, idx) {
-            const el = Utils.createEl("g", { "data-id": this.id, class: "solid-group" });
-            el.style.setProperty('--stroke-color', this.color);
-            if (this.selected) el.classList.add("selected");
-            const cls = this.lineStyle === 'dashed' ? "edge-dashed custom-dashed" : "edge-solid custom-solid";
-            const line = Utils.createEl("line", { x1: this.p1.x, y1: this.p1.y, x2: this.p2.x, y2: this.p2.y, class: cls }); el.appendChild(line);
-            if (this.mark !== 'none') Utils.drawMark(el, this.p1, this.p2, this.mark, this.color);
-            Utils.createCross(el, this.p1.x, this.p1.y, 4, this.color); Utils.createCross(el, this.p2.x, this.p2.y, 4, this.color);
-            const hit = Utils.createEl("line", { x1: this.p1.x, y1: this.p1.y, x2: this.p2.x, y2: this.p2.y, stroke: "transparent", "stroke-width": 10, class: "edge-hit", "data-sid": this.id }); el.appendChild(hit);
-            g.appendChild(el); return l ? this.renderLabels(g, [this.p1, this.p2], idx) : idx;
-        }
-        renderHandles(g) { g.appendChild(Utils.createEl("circle", { cx: this.p1.x, cy: this.p1.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id })); g.appendChild(Utils.createEl("circle", { cx: this.p2.x, cy: this.p2.y, r: 5, class: "handle", "data-idx": 1, "data-sid": this.id })); }
-        moveHandle(i, p) { if (i == 0) { this.p1.x = p.x; this.p1.y = p.y; } else { this.p2.x = p.x; this.p2.y = p.y; } }
-        moveLabel(i, p) { const pt = (i == 0) ? this.p1 : this.p2; const dx = p.x - pt.x; const dy = p.y - pt.y; this.labels[i].ang = Math.atan2(dy, dx); this.labels[i].dist = Math.sqrt(dx * dx + dy * dy); }
-        getData() { return { type: 'segment', p1: this.p1, p2: this.p2, color: this.color, lineStyle: this.lineStyle, mark: this.mark, labels: this.labels }; }
+    getSnapPoints() { return [this.p]; }
+
+    render(g, l, idx) {
+        const el = Utils.createEl("g", { "data-id": this.id, class: "solid-group" });
+        el.style.setProperty('--stroke-color', this.color);
+        if (this.selected) el.classList.add("selected");
+
+   Utils.drawPointShape(el, this.p.x, this.p.y, this.pStyle, this.color);
+
+        // Zone de clic invisible (C'est elle qui garde l'interaction)
+        const hit = Utils.createEl("circle", { cx: this.p.x, cy: this.p.y, r: 10, fill: "transparent", stroke: "none" });
+        el.appendChild(hit);
+
+        g.appendChild(el);
+        return l ? this.renderLabels(g, [this.p], idx) : idx;
     }
+    
+    renderHandles(g) { g.appendChild(Utils.createEl("circle", { cx: this.p.x, cy: this.p.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id })); }
+    moveHandle(i, p) { this.p = p; }
+    moveLabel(i, p) { const dx = p.x - this.p.x; const dy = p.y - this.p.y; this.labels[0].ang = Math.atan2(dy, dx); this.labels[0].dist = Math.sqrt(dx * dx + dy * dy); }
+    getData() { return { type: 'freepoint', p: this.p, color: this.color, labels: this.labels, pStyle: this.pStyle }; }
+}
+
+    class Segment extends Solid {
+    // Ajout du paramètre 'style' au constructeur
+    constructor(p1, p2, l1, l2, style) {
+        super();
+        this.p1 = p1; 
+        this.p2 = p2;
+        this.labels = [{ t: l1 || "", ang: -Math.PI / 4, dist: 20 }, { t: l2 || "", ang: -Math.PI / 4, dist: 20 }];
+        this.lineStyle = 'solid'; 
+        this.mark = 'none';
+        // Stocke le style (ou prend celui par défaut s'il n'existe pas)
+        this.pStyle = style || 'cross';
+    }
+
+    getSnapPoints() { return [this.p1, this.p2]; }
+
+    render(g, l, idx) {
+        const el = Utils.createEl("g", { "data-id": this.id, class: "solid-group" });
+        el.style.setProperty('--stroke-color', this.color);
+        if (this.selected) el.classList.add("selected");
+
+        const cls = this.lineStyle === 'dashed' ? "edge-dashed custom-dashed" : "edge-solid custom-solid";
+        
+        // Dessin de la ligne
+        const line = Utils.createEl("line", { x1: this.p1.x, y1: this.p1.y, x2: this.p2.x, y2: this.p2.y, class: cls }); 
+        el.appendChild(line);
+
+        // Dessin des marques de codage
+        if (this.mark !== 'none') Utils.drawMark(el, this.p1, this.p2, this.mark, this.color);
+
+        // --- NOUVEAU : DESSIN DES EXTRÉMITÉS SELON LE STYLE CHOISI ---
+        Utils.drawPointShape(el, this.p1.x, this.p1.y, this.pStyle, this.color);
+        Utils.drawPointShape(el, this.p2.x, this.p2.y, this.pStyle, this.color);
+        // -------------------------------------------------------------
+
+        // Zone de clic (Hitbox)
+        const hit = Utils.createEl("line", { x1: this.p1.x, y1: this.p1.y, x2: this.p2.x, y2: this.p2.y, stroke: "transparent", "stroke-width": 10, class: "edge-hit", "data-sid": this.id }); 
+        el.appendChild(hit);
+
+        g.appendChild(el); 
+        return l ? this.renderLabels(g, [this.p1, this.p2], idx) : idx;
+    }
+
+    // ... renderHandles, moveHandle, moveLabel inchangés ...
+    renderHandles(g) { g.appendChild(Utils.createEl("circle", { cx: this.p1.x, cy: this.p1.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id })); g.appendChild(Utils.createEl("circle", { cx: this.p2.x, cy: this.p2.y, r: 5, class: "handle", "data-idx": 1, "data-sid": this.id })); }
+    moveHandle(i, p) { if (i == 0) { this.p1.x = p.x; this.p1.y = p.y; } else { this.p2.x = p.x; this.p2.y = p.y; } }
+    moveLabel(i, p) { const pt = (i == 0) ? this.p1 : this.p2; const dx = p.x - pt.x; const dy = p.y - pt.y; this.labels[i].ang = Math.atan2(dy, dx); this.labels[i].dist = Math.sqrt(dx * dx + dy * dy); }
+
+    // Ajout de pStyle dans la sauvegarde
+    getData() { return { type: 'segment', p1: this.p1, p2: this.p2, color: this.color, lineStyle: this.lineStyle, mark: this.mark, labels: this.labels, pStyle: this.pStyle }; }
+}
 
     class Polyhedron extends Solid {
         constructor(v, f, l) { super(); this.vertices = v; this.facesIndices = f; if (l) this.labels = l; this.edgeStyles = {}; this.edgeMarks = {}; }
@@ -1560,7 +1626,7 @@
             this.mode = 'select'; this.step = 0; this.solids = []; this.history = []; this.future = []; this.temp = {}; this.tgt = null; this.tgtIdx = null; this.tgtEdge = null; this.drag = null;
             this.gridType = 'dots';
             this.view = { x: 0, y: 0, z: 1 };
-
+this.defaultPointStyle = 'cross';
             this.svg = document.getElementById('canvas'); this.lSolids = document.getElementById('layer-solids'); this.lHandles = document.getElementById('layer-handles'); this.lGhost = document.getElementById('layer-ghost');
             this.marker = document.getElementById('snap-marker'); this.menu = document.getElementById('context-menu'); this.backdrop = document.getElementById('menu-backdrop');
             this.pill = document.getElementById('status-pill'); this.viewport = document.getElementById('viewport'); this.bgRect = document.getElementById('bg-rect');
@@ -1640,6 +1706,50 @@
             else if (this.gridType === 'iso') this.bgRect.setAttribute('fill', 'url(#pat-iso)');
             else this.bgRect.setAttribute('fill', 'white');
         }
+cyclePointStyle() {
+    const styles = ['cross', 'dot', 'pixel'];
+    // Trouve l'index actuel et passe au suivant
+    let idx = styles.indexOf(this.defaultPointStyle);
+    idx = (idx + 1) % styles.length;
+    this.defaultPointStyle = styles[idx];
+
+    // Mise à jour de l'icône du bouton header
+    const svg = document.getElementById('icon-pt-style');
+    svg.innerHTML = ''; // Vide l'icône actuelle
+    
+    if (this.defaultPointStyle === 'cross') {
+        // Icône Croix
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", "M8 8L16 16M16 8L8 16");
+        p.setAttribute("stroke", "currentColor");
+        p.setAttribute("stroke-width", "2");
+        p.setAttribute("stroke-linecap", "round");
+        svg.appendChild(p);
+        this.toast("Style par défaut : Croix");
+    } else if (this.defaultPointStyle === 'dot') {
+        // Icône Rond
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", "12"); c.setAttribute("cy", "12"); c.setAttribute("r", "4");
+        c.setAttribute("fill", "currentColor");
+        svg.appendChild(c);
+        this.toast("Style par défaut : Cercle");
+    } else {
+        // Icône Pixel
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", "12"); c.setAttribute("cy", "12"); c.setAttribute("r", "2");
+        c.setAttribute("fill", "currentColor");
+        svg.appendChild(c);
+        this.toast("Style par défaut : Pixel");
+    }
+
+    // OPTIONNEL : Si des points sont sélectionnés, on change leur style immédiatement
+    const selectedPoints = this.solids.filter(s => s.selected && s instanceof FreePoint);
+    if (selectedPoints.length > 0) {
+        this.saveState();
+        selectedPoints.forEach(p => p.pStyle = this.defaultPointStyle);
+        this.renderAll();
+    }
+}
 
         updateView() { this.scene.setAttribute('transform', `translate(${this.view.x},${this.view.y}) scale(${this.view.z})`); }
         onWheel(e) { e.preventDefault(); const s = Math.exp(-e.deltaY * 0.001); const rect = this.svg.getBoundingClientRect(); const mx = e.clientX - rect.left; const my = e.clientY - rect.top; this.view.x = mx - (mx - this.view.x) * s; this.view.y = my - (my - this.view.y) * s; this.view.z *= s; this.updateView(); }
@@ -2022,7 +2132,12 @@
                 if (d.type === 'prism') o = new Prism(d.base, d.vec, d.labels); else if (d.type === 'pyramid') o = new Pyramid(d.base, d.apex, d.labels); else if (d.type === 'cylinder') o = new Cylinder(d.c, d.rx, d.ry, d.h, d.orient, d.inv); else if (d.type === 'cone') o = new Cone(d.c, d.rx, d.ry, d.h, d.orient, d.inv); else if (d.type === 'sphere') o = new Sphere(d.c, d.r);
                 else if (d.type === 'freepoint') { o = new FreePoint(d.p, (d.labels && d.labels[0]) ? d.labels[0].t : ""); if (d.pStyle) o.pStyle = d.pStyle; }
                 else if (d.type === 'freetext') { o = new FreeText(d.p, d.text); }
-                else if (d.type === 'segment') { o = new Segment(d.p1, d.p2); if (d.lineStyle) o.lineStyle = d.lineStyle; if (d.mark) o.mark = d.mark; }
+                else if (d.type === 'segment') { 
+    // MODIFICATION ICI : On passe d.pStyle
+    o = new Segment(d.p1, d.p2, null, null, d.pStyle); 
+    if (d.lineStyle) o.lineStyle = d.lineStyle; 
+    if (d.mark) o.mark = d.mark; 
+}
                 else if (d.type === 'polyface') { o = new PolyFace(d.vertices); o.opacity = d.opacity; if (d.hasBorder !== undefined) o.hasBorder = d.hasBorder; if (d.fillStyle) o.fillStyle = d.fillStyle; }
                 if (o && d.color) o.color = d.color; if (d.vertices) o.vertices = d.vertices; if (d.labels && o.labels && d.type !== 'freepoint') o.labels = d.labels; if (d.edgeStyles) o.edgeStyles = d.edgeStyles; if (d.edgeMarks) o.edgeMarks = d.edgeMarks; return o;
             }); this.renderAll();
@@ -2113,16 +2228,23 @@
                     if (p1 && p2) { const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 }; this.saveState(); this.solids.push(new FreePoint(mid, this.getAvailableLabel())); this.finish(); }
                 } return;
             }
-            else if (this.mode === 'segment') {
-                if (this.step === 0) { this.temp.p1 = p; this.step = 1; this.toast("Cliquez sur le SECOND point..."); }
-                else {
-                    this.saveState();
-                    let l1 = this.findPointLabel(this.temp.p1); if (l1) l1 = ""; else l1 = this.getAvailableLabel();
-                    let l2 = this.findPointLabel(p); if (l2) l2 = ""; else { const excl = (l1 === "") ? [] : [l1]; l2 = this.getAvailableLabel(excl); }
-                    this.solids.push(new Segment(this.temp.p1, p, l1, l2));
-                    this.finish();
-                }
-            }
+         else if (this.mode === 'segment') {
+    if (this.step === 0) { 
+        this.temp.p1 = p; 
+        this.step = 1; 
+        this.toast("Cliquez sur le SECOND point..."); 
+    }
+    else {
+        this.saveState();
+        let l1 = this.findPointLabel(this.temp.p1); if (l1) l1 = ""; else l1 = this.getAvailableLabel();
+        let l2 = this.findPointLabel(p); if (l2) l2 = ""; else { const excl = (l1 === "") ? [] : [l1]; l2 = this.getAvailableLabel(excl); }
+        
+        // MODIFICATION ICI : On passe this.defaultPointStyle en dernier argument
+        this.solids.push(new Segment(this.temp.p1, p, l1, l2, this.defaultPointStyle));
+        
+        this.finish();
+    }
+}
             else if (this.mode === 'face_poly') {
                 if (this.step === 0) { this.temp.pts = [p]; this.step = 1; this.toast("Cliquez sur le point suivant... (Re-cliquez sur le 1er pour finir)"); }
                 else { const first = this.temp.pts[0]; const dist = Math.hypot(p.x - first.x, p.y - first.y); if (this.temp.pts.length >= 3 && (p === first || dist < 15)) { this.saveState(); this.solids.push(new PolyFace(this.temp.pts)); this.finish(); } else { this.temp.pts.push(p); } }
