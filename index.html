@@ -1,10 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
-    <title>GéoMaster Pro - Final V4</title>
+    <title>GéoMaster Pro</title>
     <style>
         /* --- VARIABLES & RESET --- */
         :root {
@@ -15,7 +13,6 @@
             --text-main: #1d1d1f;
             --danger: #FF3B30;
         }
-
         body {
             margin: 0;
             display: flex;
@@ -26,9 +23,6 @@
             user-select: none;
             overflow: hidden;
         }
-
-        /* --- HEADER --- */
-        /* --- HEADER --- */
         #header {
             height: 56px;
             background: rgba(255, 255, 255, 0.95);
@@ -43,7 +37,6 @@
             gap: 5px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-
         /* Titre de l'application */
         .app-title {
             font-weight: 800;
@@ -55,7 +48,6 @@
             align-items: center;
             gap: 6px;
         }
-
         .app-version {
             font-size: 10px;
             color: #007AFF;
@@ -65,14 +57,12 @@
             font-weight: 700;
             text-transform: uppercase;
         }
-
         .h-sep {
             width: 1px;
             height: 24px;
             background: #e0e0e0;
             margin: 0 4px;
         }
-
         /* Style des boutons */
         .h-btn {
             display: flex;
@@ -87,31 +77,26 @@
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-
         .h-btn:hover {
             background: rgba(0, 0, 0, 0.05);
             color: #000;
             transform: translateY(-1px);
         }
-
         .h-btn:active {
             transform: scale(0.96);
         }
-
         /* État actif */
         .h-btn.active {
             background: #eef7ff;
             color: #007AFF;
             border-color: rgba(0, 122, 255, 0.3);
         }
-
         /* Bouton Danger */
         .h-btn-danger:hover {
             background: #fff0f0;
             color: #FF3B30;
             border-color: rgba(255, 59, 48, 0.2);
         }
-
         /* SVG Config */
         .h-btn svg {
             width: 22px;
@@ -122,7 +107,6 @@
             stroke-linecap: round;
             stroke-linejoin: round;
         }
-
         /* Ajustement pour les icônes SVG/PNG avec texte intégré */
         .h-btn .svg-label {
             font-family: sans-serif;
@@ -131,7 +115,6 @@
             fill: currentColor;
             stroke: none;
         }
-
         .svg-text {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             font-weight: 900;
@@ -143,38 +126,32 @@
             letter-spacing: -0.5px;
             /* Rapproche un peu les lettres */
         }
-
         /* Inputs cachés pour logique JS */
         #chkMagnet,
         #chkNames {
             display: none;
         }
-
         .toggle-row {
             display: flex;
             align-items: center;
             gap: 6px;
         }
-
         .toggle-label {
             font-size: 12px;
             font-weight: 600;
             color: #555;
         }
-
         .switch {
             position: relative;
             display: inline-block;
             width: 28px;
             height: 16px;
         }
-
         .switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-
         .slider {
             position: absolute;
             cursor: pointer;
@@ -186,7 +163,6 @@
             transition: .3s;
             border-radius: 20px;
         }
-
         .slider:before {
             position: absolute;
             content: "";
@@ -199,15 +175,12 @@
             border-radius: 50%;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
-
         input:checked+.slider {
             background-color: var(--accent);
         }
-
         input:checked+.slider:before {
             transform: translateX(12px);
         }
-
         .action-btn {
             height: 32px;
             padding: 0 10px;
@@ -224,17 +197,14 @@
             color: var(--text-main);
             white-space: nowrap;
         }
-
         .action-btn:hover {
             background: #f0f0f0;
         }
-
         .btn-danger {
             color: var(--danger);
             border-color: rgba(255, 59, 48, 0.3);
             background: rgba(255, 59, 48, 0.05);
         }
-
         /* --- LAYOUT --- */
         #main-container {
             display: flex;
@@ -242,7 +212,6 @@
             overflow: hidden;
             position: relative;
         }
-
         #sidebar {
             width: 100px;
             min-width: 100px;
@@ -257,14 +226,12 @@
             overflow-y: auto;
             align-items: center;
         }
-
         .tool-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
             width: 100%;
         }
-
         .btn {
             display: flex;
             align-items: center;
@@ -280,18 +247,15 @@
             padding: 0;
             position: relative;
         }
-
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             background: #fafafa;
         }
-
         .btn.active {
             border: 2px solid var(--accent);
             background: #f0f8ff;
         }
-
         .btn svg {
             width: 24px;
             height: 24px;
@@ -301,11 +265,9 @@
             stroke-linecap: round;
             stroke-linejoin: round;
         }
-
         .btn.active svg {
             stroke: var(--accent);
         }
-
         #viewport {
             flex-grow: 1;
             position: relative;
@@ -314,29 +276,23 @@
             height: 100%;
             overflow: hidden;
         }
-
         #viewport.mode-select {
             cursor: default;
         }
-
         #viewport.mode-pan_tool {
             cursor: grab;
         }
-
         #viewport.mode-pan_tool:active {
             cursor: grabbing;
         }
-
         #viewport.mode-eraser {
             cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="%23FF3B30" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg>') 12 12, auto;
         }
-
         svg {
             width: 100%;
             height: 100%;
             display: block;
         }
-
         /* --- UI ELEMENTS --- */
         #status-pill {
             position: absolute;
@@ -357,12 +313,10 @@
             transition: all 0.3s;
             z-index: 50;
         }
-
         #status-pill.show {
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
-
         /* INLINE INPUT FOR TEXT */
         #inline-input {
             position: fixed;
@@ -380,7 +334,6 @@
             min-width: 60px;
             transform: translate(-50%, -120%);
         }
-
         /* --- CONTEXT MENU (FIXED) --- */
         #menu-backdrop {
             position: fixed;
@@ -391,7 +344,6 @@
             z-index: 900;
             display: none;
         }
-
         #context-menu {
             position: fixed;
             display: none;
@@ -406,19 +358,16 @@
             animation: menuPop 0.1s ease-out;
             overflow: hidden;
         }
-
         @keyframes menuPop {
             from {
                 opacity: 0;
                 transform: scale(0.95);
             }
-
             to {
                 opacity: 1;
                 transform: scale(1);
             }
         }
-
         #menu-header {
             height: 24px;
             background: #f0f0f5;
@@ -433,16 +382,13 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-
         #menu-header:active {
             cursor: grabbing;
             background: #e5e5ea;
         }
-
         .menu-content {
             padding: 8px;
         }
-
         .menu-item {
             padding: 8px 12px;
             cursor: pointer;
@@ -455,25 +401,21 @@
             transition: 0.1s;
             font-weight: 500;
         }
-
         .menu-item:hover {
             background: var(--accent);
             color: white;
         }
-
         .menu-separator {
             height: 1px;
             background: var(--border);
             margin: 6px 0;
         }
-
         .color-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 6px;
             padding: 4px;
         }
-
         .color-swatch {
             width: 24px;
             height: 24px;
@@ -483,20 +425,17 @@
             transition: 0.2s;
             box-sizing: border-box;
         }
-
         .color-swatch:hover {
             transform: scale(1.2);
             border-color: white;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
-
         .fill-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 6px;
             padding: 4px;
         }
-
         .fill-swatch {
             width: 32px;
             height: 32px;
@@ -508,32 +447,27 @@
             align-items: center;
             justify-content: center;
         }
-
         .fill-swatch:hover {
             border-color: var(--accent);
             background: #f0f8ff;
         }
-
         .fill-swatch svg {
             width: 20px;
             height: 20px;
             stroke: #333;
         }
-
         .btn-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 6px;
             padding: 4px;
         }
-
         .mark-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 6px;
             padding: 4px;
         }
-
         .icon-btn {
             flex: 1;
             height: 32px;
@@ -548,18 +482,15 @@
             font-weight: bold;
             font-size: 14px;
         }
-
         .icon-btn:hover {
             border-color: var(--accent);
             color: var(--accent);
             background: #f5f9ff;
         }
-
         .icon-btn svg {
             width: 18px;
             height: 18px;
         }
-
         .letter-control {
             display: flex;
             align-items: center;
@@ -570,7 +501,6 @@
             border-radius: 8px;
             padding: 4px 8px;
         }
-
         .letter-btn {
             width: 28px;
             height: 28px;
@@ -585,13 +515,11 @@
             color: #555;
             transition: 0.1s;
         }
-
         .letter-btn:hover {
             background: var(--accent);
             color: white;
             border-color: var(--accent);
         }
-
         .letter-display {
             font-weight: 800;
             font-size: 18px;
@@ -601,11 +529,9 @@
             user-select: none;
             font-family: "Segoe UI", sans-serif;
         }
-
         .menu-slider-container {
             padding: 4px 4px;
         }
-
         .menu-slider-label {
             font-size: 11px;
             font-weight: 600;
@@ -613,7 +539,6 @@
             margin-bottom: 4px;
             display: block;
         }
-
         input[type=range] {
             -webkit-appearance: none;
             width: 100%;
@@ -622,7 +547,6 @@
             background: #d1d1d6;
             outline: none;
         }
-
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -632,30 +556,25 @@
             background: var(--accent);
             cursor: pointer;
         }
-
         /* --- SVG STYLES --- */
         .dot-grid {
             fill: #d1d1d6;
         }
-
         .face {
             fill: transparent;
             stroke: none;
             pointer-events: visible;
             cursor: move;
         }
-
         .face-base {
             fill: transparent;
         }
-
         .custom-face {
             stroke: none;
             pointer-events: visible;
             cursor: move;
             transition: fill 0.2s;
         }
-
         .edge-solid {
             stroke: var(--stroke-color, #1d1d1f);
             stroke-width: 2;
@@ -665,7 +584,6 @@
             pointer-events: none;
             transition: 0.2s;
         }
-
         .edge-dashed {
             stroke: var(--stroke-color, #1d1d1f);
             stroke-width: 2;
@@ -674,15 +592,12 @@
             pointer-events: none;
             transition: 0.2s;
         }
-
         .custom-solid {
             stroke-dasharray: none !important;
         }
-
         .custom-dashed {
             stroke-dasharray: 6, 6 !important;
         }
-
         /* HIT ZONES */
         .edge-hit {
             stroke: transparent;
@@ -691,28 +606,23 @@
             cursor: pointer;
             pointer-events: stroke;
         }
-
         .edge-selected {
             stroke: var(--accent) !important;
             stroke-width: 3px !important;
             filter: drop-shadow(0 0 3px rgba(0, 122, 255, 0.5));
         }
-
         .edge-hit:hover {
             stroke: rgba(0, 122, 255, 0.1);
         }
-
         /* Mode Gomme Hover */
         .eraser-hover {
             stroke: #FF3B30 !important;
             filter: drop-shadow(0 0 5px #FF3B30);
             opacity: 0.7;
         }
-
         .eraser-hover-face {
             fill: rgba(255, 59, 48, 0.2) !important;
         }
-
         .vertex-label,
         .free-text {
             font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -727,30 +637,25 @@
             user-select: none;
             pointer-events: visible;
         }
-
         .vertex-label:hover {
             fill: var(--accent);
             cursor: pointer;
         }
-
         .free-text {
             font-weight: 500;
             font-size: 16px;
             cursor: move;
             fill: #333;
         }
-
         .solid-group.selected .edge-solid,
         .solid-group.selected .edge-dashed {
             stroke: var(--accent);
             stroke-width: 3px;
             filter: drop-shadow(0 0 2px rgba(0, 122, 255, 0.3));
         }
-
         .solid-group.selected .face {
             fill: rgba(0, 122, 255, 0.05);
         }
-
         .ghost * {
             fill: none !important;
             stroke: var(--accent) !important;
@@ -758,19 +663,16 @@
             stroke-dasharray: 4, 4 !important;
             opacity: 0.6;
         }
-
         .ghost-face {
             fill: var(--accent) !important;
             stroke: none !important;
             opacity: 0.2 !important;
         }
-
         .ghost-pt {
             fill: var(--accent) !important;
             stroke: none !important;
             opacity: 1 !important;
         }
-
         #snap-marker {
             stroke: var(--accent);
             stroke-width: 2;
@@ -779,26 +681,22 @@
             pointer-events: none;
             transition: 0.1s;
         }
-
         #snap-marker.visible {
             opacity: 1;
             r: 6;
         }
-
         #snap-marker.snapped-point {
             stroke: #34C759;
             stroke-width: 3;
             r: 8;
             fill: rgba(52, 199, 89, 0.2);
         }
-
         #snap-marker.closing {
             stroke: var(--accent);
             stroke-width: 3;
             r: 10;
             fill: rgba(0, 122, 255, 0.2);
         }
-
         .handle {
             fill: white;
             stroke: var(--accent);
@@ -808,12 +706,10 @@
             pointer-events: visible;
             display: none;
         }
-
         #layer-handles.show-all .handle {
             display: block;
             opacity: 0.8;
         }
-
         .handle:hover {
             r: 8px;
             fill: var(--accent);
@@ -822,16 +718,13 @@
             opacity: 1 !important;
             z-index: 1000;
         }
-
         .grid-line {
             stroke: #dcdcdc;
             stroke-width: 1;
         }
     </style>
 </head>
-
 <body>
-
     <header id="header">
         <div class="app-title">GéoMaster <span class="app-version">3D</span></div>
         <button class="h-btn active" id="btn-select" onclick="app.setMode('select', this)" title="Sélectionner">
@@ -844,7 +737,6 @@
                 <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
             </svg>
         </button>
-
         <button class="h-btn" onclick="app.undo()" title="Annuler (Ctrl+Z)">
             <svg viewBox="0 0 24 24">
                 <path d="M9 14 4 9l5-5" />
@@ -857,16 +749,13 @@
                 <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13" />
             </svg>
         </button>
-
         <div class="h-sep"></div>
-
         <button class="h-btn" onclick="app.loadProject()" title="Ouvrir">
             <svg viewBox="0 0 24 24">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
         </button>
         <input type="file" id="file-input" style="display:none" onchange="app.handleFileSelect(this)">
-
         <button class="h-btn" onclick="app.saveProject()" title="Sauvegarder">
             <svg viewBox="0 0 24 24">
                 <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
@@ -874,16 +763,13 @@
                 <polyline points="7 3 7 8 15 8" />
             </svg>
         </button>
-
         <button class="h-btn" onclick="app.copyImage()" title="Presse-papier">
             <svg viewBox="0 0 24 24">
                 <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
                 <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
             </svg>
         </button>
-
         <div class="h-sep"></div>
-
         <button class="h-btn" onclick="app.exportSVG()" title="Export SVG">
             <svg viewBox="0 0 24 24">
                 <path d="M6 3v10" stroke-width="1.5" />
@@ -892,7 +778,6 @@
                 <text x="8" y="16" class="svg-text">SVG</text>
             </svg>
         </button>
-
         <button class="h-btn" onclick="app.exportPNG()" title="Export PNG">
             <svg viewBox="0 0 24 24">
                 <path d="M6 3v10" stroke-width="1.5" />
@@ -901,11 +786,15 @@
                 <text x="8" y="16" class="svg-text">PNG</text>
             </svg>
         </button>
-
-
-
+<button class="h-btn" onclick="app.exportTikZ()" title="Export TikZ (LaTeX)">
+            <svg viewBox="0 0 24 24">
+                <path d="M6 3v10" stroke-width="1.5" />
+                <path d="M3 10l3 3 3-3" stroke-width="1.5" />
+                <path d="M2 16h8" stroke-width="1.5" />
+                <text x="8" y="16" class="svg-text">TEX</text>
+            </svg>
+        </button>
         <div class="h-sep"></div>
-
         <button class="h-btn" id="btn-pan" onclick="app.setMode('pan_tool', this)" title="Déplacer la vue">
             <svg viewBox="0 0 24 24">
                 <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
@@ -915,7 +804,6 @@
                     d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
             </svg>
         </button>
-
         <button class="h-btn" onclick="app.toggleGrid()" title="Grille">
             <svg viewBox="0 0 24 24">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -925,7 +813,6 @@
                 <path d="M15 3v18" />
             </svg>
         </button>
-
         <button class="h-btn" onclick="app.autoCode()" title="Codage Automatique">
             <svg viewBox="0 0 24 24">
                 <line x1="5" y1="19" x2="16" y2="8" stroke-width="2" stroke-linecap="round" />
@@ -933,9 +820,7 @@
                     fill="currentColor" stroke="none" />
             </svg>
         </button>
-
         <div class="h-sep"></div>
-
         <input type="checkbox" id="chkMagnet" checked>
         <button class="h-btn active" id="btn-magnet-ui" onclick="toggleHeaderBtn('chkMagnet', this)" title="Aimant">
             <svg viewBox="0 0 24 24">
@@ -944,7 +829,6 @@
                 <path d="M5 19 Q 12 24 19 17" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.5" />
             </svg>
         </button>
-
         <input type="checkbox" id="chkNames" checked onchange="app.renderAll()">
         <button class="h-btn active" id="btn-names-ui" onclick="toggleHeaderBtn('chkNames', this)"
             title="Afficher Noms">
@@ -969,7 +853,6 @@
             </svg>
         </button>
     </header>
-
     <div id="main-container">
         <div id="sidebar">
             <div class="tool-grid">
@@ -1010,7 +893,6 @@
                         <path d="M18 6L6 18M6 6l12 12" stroke="#FF3B30" stroke-width="2" />
                     </svg>
                 </button>
-
                 <button class="btn" title="Pavé Droit" onclick="app.setMode('cuboid', this)">
                     <svg viewBox="0 0 24 24">
                         <path d="M4 8 L14 8 L14 20 L4 20 Z" fill="none" stroke="currentColor" stroke-linejoin="round" />
@@ -1060,7 +942,6 @@
                 </button>
             </div>
         </div>
-
         <div id="viewport">
             <svg id="canvas">
                 <defs>
@@ -1096,7 +977,6 @@
             <div id="status-pill">Prêt.</div>
             <div id="menu-backdrop"></div>
             <input type="text" id="inline-input">
-
             <div id="context-menu">
                 <div id="menu-header">Propriétés</div>
                 <div class="menu-content">
@@ -1108,32 +988,27 @@
                         </div>
                     </div>
                     <div class="menu-separator" id="menu-sep-1" style="display:none"></div>
-
                     <div id="menu-style-segment" style="display:none">
                         <div class="menu-slider-label">Style de trait</div>
                         <div class="btn-grid">
                             <div class="icon-btn" onclick="app.menuAction('style', 'solid')">━</div>
                             <div class="icon-btn" onclick="app.menuAction('style', 'dashed')">┄</div>
                         </div>
-
                         <div class="menu-separator"></div>
                         <div class="menu-slider-label">Codage (I, II, III, x, o)</div>
                         <div class="mark-grid">
                             <div class="icon-btn" onclick="app.menuAction('mark', 'none')">∅</div>
                             <div class="icon-btn" onclick="app.menuAction('mark', 'simple')">|</div>
                             <div class="icon-btn" onclick="app.menuAction('mark', 'cross')">×</div>
-
                             <div class="icon-btn" onclick="app.menuAction('mark', 'double')">||</div>
                             <div class="icon-btn" onclick="app.menuAction('mark', 'cross2')">××</div>
                             <div class="icon-btn" onclick="app.menuAction('mark', 'circle')">○</div>
-
                             <div class="icon-btn" onclick="app.menuAction('mark', 'triple')">|||</div>
                             <div class="icon-btn" onclick="app.menuAction('mark', 'cross3')">×××</div>
                             <div class="icon-btn" onclick="app.menuAction('mark', 'circle2')">○○</div>
                         </div>
                         <div class="menu-separator"></div>
                     </div>
-
               <div id="menu-style-point" style="display:none">
     <div class="menu-slider-label">Forme du point</div>
     <div class="mark-grid"> <div class="icon-btn" onclick="app.menuAction('pstyle', 'cross')" title="Croix">
@@ -1148,7 +1023,6 @@
     </div>
     <div class="menu-separator"></div>
 </div>
-
                     <div id="menu-style-face" style="display:none">
                         <div class="menu-slider-container">
                             <span class="menu-slider-label">Opacité</span>
@@ -1175,7 +1049,6 @@
                         </div>
                         <div class="menu-separator"></div>
                     </div>
-
                     <div class="menu-slider-label">Couleur</div>
                     <div class="color-grid">
                         <div class="color-swatch" style="background:#000000"
@@ -1188,7 +1061,6 @@
                             onclick="app.menuAction('color', '#FF3B30')"></div>
                         <div class="color-swatch" style="background:#FF9500"
                             onclick="app.menuAction('color', '#FF9500')"></div>
-
                         <div class="color-swatch" style="background:#FFCC00"
                             onclick="app.menuAction('color', '#FFCC00')"></div>
                         <div class="color-swatch" style="background:#34C759"
@@ -1200,9 +1072,7 @@
                         <div class="color-swatch" style="background:#AF52DE"
                             onclick="app.menuAction('color', '#AF52DE')"></div>
                     </div>
-
                     <div class="menu-separator"></div>
-
                     <div class="menu-item" onclick="app.menuAction('invert')">🔄 Inverser (Arrière/Avant)</div>
                     <div class="menu-item" onclick="app.menuAction('z-front')">↑ Premier Plan</div>
                     <div class="menu-item" onclick="app.menuAction('z-back')">↓ Arrière Plan</div>
@@ -1212,7 +1082,6 @@
             </div>
         </div>
     </div>
-
     <div id="donateModal"
         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:5000; justify-content:center; align-items:center;">
         <div
@@ -1232,21 +1101,16 @@
         </div>
     </div>
 </body>
-
 <script>
     const GRID = 40;
     const MARK_TYPES = ['none', 'simple', 'double', 'triple', 'cross', 'cross2', 'cross3', 'circle', 'circle2', 'circle3'];
-
     class Utils {
 	static drawPointShape(g, x, y, style, color) {
         if (style === 'dot') {
-            // Rond
             g.appendChild(Utils.createEl("circle", { cx: x, cy: y, r: 4, fill: color }));
         } else if (style === 'pixel') {
-            // Pixel
             g.appendChild(Utils.createEl("circle", { cx: x, cy: y, r: 2, fill: color }));
         } else {
-            // Croix (par défaut)
             Utils.createCross(g, x, y, 4, color);
         }
     }
@@ -1273,7 +1137,6 @@
             const ny = Math.cos(angle);
             const len = 5;
             const style = { stroke: color, "stroke-width": 2, fill: "none" };
-
             const drawLineMark = (offset) => {
                 const dx = Math.cos(angle) * offset, dy = Math.sin(angle) * offset;
                 g.appendChild(Utils.createEl("line", { ...style, x1: mx + dx - nx * len, y1: my + dy - ny * len, x2: mx + dx + nx * len, y2: my + dy + ny * len }));
@@ -1288,7 +1151,6 @@
                 const cx = mx + Math.cos(angle) * offset, cy = my + Math.sin(angle) * offset;
                 g.appendChild(Utils.createEl("circle", { ...style, cx: cx, cy: cy, r: 3.5 }));
             };
-
             if (type === 'simple') { drawLineMark(0); }
             else if (type === 'double') { drawLineMark(-3); drawLineMark(3); }
             else if (type === 'triple') { drawLineMark(0); drawLineMark(-6); drawLineMark(6); }
@@ -1300,7 +1162,6 @@
             else if (type === 'circle3') { drawCircleMark(0); drawCircleMark(-10); drawCircleMark(10); }
         }
     }
-
     class Solid {
         constructor() {
             this.id = Date.now() + Math.random();
@@ -1330,7 +1191,6 @@
             return idx + v.length;
         }
     }
-
     class FreeText extends Solid {
         constructor(p, text) { super(); this.p = p; this.text = text || "Texte"; }
         getSnapPoints() { return [this.p]; }
@@ -1349,7 +1209,6 @@
         translate(dx, dy) { this.p.x += dx; this.p.y += dy; }
         getData() { return { type: 'freetext', p: this.p, text: this.text, color: this.color }; }
     }
-
     class PolyFace extends Solid {
         constructor(pts) { super(); this.vertices = pts; this.opacity = 0.5; this.color = "#007AFF"; this.hasBorder = true; this.fillStyle = 'solid'; }
         getSnapPoints() { return this.vertices; }
@@ -1370,41 +1229,30 @@
         moveHandle(i, p) { this.vertices[i].x = p.x; this.vertices[i].y = p.y; }
         getData() { return { type: 'polyface', vertices: this.vertices, color: this.color, opacity: this.opacity, hasBorder: this.hasBorder, fillStyle: this.fillStyle }; }
     }
-
  class FreePoint extends Solid {
     constructor(p, labelOverride) {
         super();
         this.p = p;
         this.labels = [{ t: labelOverride || "", ang: -Math.PI / 4, dist: 20 }];
-        // Définit le style par défaut (Cross si non défini)
         this.pStyle = (typeof app !== 'undefined' && app.defaultPointStyle) ? app.defaultPointStyle : 'cross';
     }
-
     getSnapPoints() { return [this.p]; }
-
     render(g, l, idx) {
         const el = Utils.createEl("g", { "data-id": this.id, class: "solid-group" });
         el.style.setProperty('--stroke-color', this.color);
         if (this.selected) el.classList.add("selected");
-
    Utils.drawPointShape(el, this.p.x, this.p.y, this.pStyle, this.color);
-
-        // Zone de clic invisible (C'est elle qui garde l'interaction)
         const hit = Utils.createEl("circle", { cx: this.p.x, cy: this.p.y, r: 10, fill: "transparent", stroke: "none" });
         el.appendChild(hit);
-
         g.appendChild(el);
         return l ? this.renderLabels(g, [this.p], idx) : idx;
     }
-    
     renderHandles(g) { g.appendChild(Utils.createEl("circle", { cx: this.p.x, cy: this.p.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id })); }
     moveHandle(i, p) { this.p = p; }
     moveLabel(i, p) { const dx = p.x - this.p.x; const dy = p.y - this.p.y; this.labels[0].ang = Math.atan2(dy, dx); this.labels[0].dist = Math.sqrt(dx * dx + dy * dy); }
     getData() { return { type: 'freepoint', p: this.p, color: this.color, labels: this.labels, pStyle: this.pStyle }; }
 }
-
     class Segment extends Solid {
-    // Ajout du paramètre 'style' au constructeur
     constructor(p1, p2, l1, l2, style) {
         super();
         this.p1 = p1; 
@@ -1412,48 +1260,29 @@
         this.labels = [{ t: l1 || "", ang: -Math.PI / 4, dist: 20 }, { t: l2 || "", ang: -Math.PI / 4, dist: 20 }];
         this.lineStyle = 'solid'; 
         this.mark = 'none';
-        // Stocke le style (ou prend celui par défaut s'il n'existe pas)
         this.pStyle = style || 'cross';
     }
-
     getSnapPoints() { return [this.p1, this.p2]; }
-
     render(g, l, idx) {
         const el = Utils.createEl("g", { "data-id": this.id, class: "solid-group" });
         el.style.setProperty('--stroke-color', this.color);
         if (this.selected) el.classList.add("selected");
-
         const cls = this.lineStyle === 'dashed' ? "edge-dashed custom-dashed" : "edge-solid custom-solid";
-        
-        // Dessin de la ligne
         const line = Utils.createEl("line", { x1: this.p1.x, y1: this.p1.y, x2: this.p2.x, y2: this.p2.y, class: cls }); 
         el.appendChild(line);
-
-        // Dessin des marques de codage
         if (this.mark !== 'none') Utils.drawMark(el, this.p1, this.p2, this.mark, this.color);
-
-        // --- NOUVEAU : DESSIN DES EXTRÉMITÉS SELON LE STYLE CHOISI ---
         Utils.drawPointShape(el, this.p1.x, this.p1.y, this.pStyle, this.color);
         Utils.drawPointShape(el, this.p2.x, this.p2.y, this.pStyle, this.color);
-        // -------------------------------------------------------------
-
-        // Zone de clic (Hitbox)
         const hit = Utils.createEl("line", { x1: this.p1.x, y1: this.p1.y, x2: this.p2.x, y2: this.p2.y, stroke: "transparent", "stroke-width": 10, class: "edge-hit", "data-sid": this.id }); 
         el.appendChild(hit);
-
         g.appendChild(el); 
         return l ? this.renderLabels(g, [this.p1, this.p2], idx) : idx;
     }
-
-    // ... renderHandles, moveHandle, moveLabel inchangés ...
     renderHandles(g) { g.appendChild(Utils.createEl("circle", { cx: this.p1.x, cy: this.p1.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id })); g.appendChild(Utils.createEl("circle", { cx: this.p2.x, cy: this.p2.y, r: 5, class: "handle", "data-idx": 1, "data-sid": this.id })); }
     moveHandle(i, p) { if (i == 0) { this.p1.x = p.x; this.p1.y = p.y; } else { this.p2.x = p.x; this.p2.y = p.y; } }
     moveLabel(i, p) { const pt = (i == 0) ? this.p1 : this.p2; const dx = p.x - pt.x; const dy = p.y - pt.y; this.labels[i].ang = Math.atan2(dy, dx); this.labels[i].dist = Math.sqrt(dx * dx + dy * dy); }
-
-    // Ajout de pStyle dans la sauvegarde
     getData() { return { type: 'segment', p1: this.p1, p2: this.p2, color: this.color, lineStyle: this.lineStyle, mark: this.mark, labels: this.labels, pStyle: this.pStyle }; }
 }
-
     class Polyhedron extends Solid {
         constructor(v, f, l) { super(); this.vertices = v; this.facesIndices = f; if (l) this.labels = l; this.edgeStyles = {}; this.edgeMarks = {}; }
         invert() { this.facesIndices.forEach(f => f.reverse()); }
@@ -1479,7 +1308,6 @@
             g.appendChild(el); return lbl ? this.renderLabels(g, this.vertices, idx) : idx;
         }
     }
-
     class Prism extends Polyhedron {
         constructor(b, v, l) {
             const bc = b.map(p => ({ x: p.x, y: p.y })); const vc = { x: v.x, y: v.y }; const n = bc.length, vs = [...bc]; bc.forEach(p => vs.push({ x: p.x + vc.x, y: p.y + vc.y }));
@@ -1488,7 +1316,6 @@
         }
         getData() { return { type: 'prism', base: this.basePoints, vec: this.vec, color: this.color, vertices: this.vertices, labels: this.labels, edgeStyles: this.edgeStyles, edgeMarks: this.edgeMarks }; }
     }
-
     class Pyramid extends Polyhedron {
         constructor(b, a, l) {
             const bc = b.map(p => ({ x: p.x, y: p.y })); const ac = { x: a.x, y: a.y }; const n = bc.length, vs = [...bc, ac], fs = [Array.from({ length: n }, (_, i) => i).reverse()];
@@ -1496,19 +1323,15 @@
         }
         getData() { return { type: 'pyramid', base: this.basePoints, apex: this.apex, color: this.color, vertices: this.vertices, labels: this.labels, edgeStyles: this.edgeStyles, edgeMarks: this.edgeMarks }; }
     }
-
     class Cylinder extends Solid {
         constructor(c, rx, ry, h, o, i) { super(); this.c = { x: c.x, y: c.y }; this.rx = rx; this.ry = ry; this.h = { x: h.x, y: h.y }; this.orient = o; this.inverted = i; }
-
         invert() { this.inverted = !this.inverted; }
-
         renderHandles(g) {
             g.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id }));
             g.appendChild(Utils.createEl("circle", { cx: this.c.x + this.rx, cy: this.c.y, r: 5, class: "handle", "data-idx": 1, "data-sid": this.id }));
             g.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y + this.ry, r: 5, class: "handle", "data-idx": 2, "data-sid": this.id }));
             g.appendChild(Utils.createEl("circle", { cx: this.c.x + this.h.x, cy: this.c.y + this.h.y, r: 5, class: "handle", "data-idx": 3, "data-sid": this.id }));
         }
-
         moveHandle(i, p) {
             i = parseInt(i);
             if (i === 0) this.c = p;
@@ -1516,81 +1339,47 @@
             else if (i === 2) this.ry = Utils.dist(this.c, p);
             else if (i === 3) { this.h = { x: p.x - this.c.x, y: p.y - this.c.y }; }
         }
-
         render(group, l, idx) {
             const g = Utils.createEl("g", { "data-id": this.id, class: "solid-group" });
             g.style.setProperty('--stroke-color', this.color);
             if (this.selected) g.classList.add("selected");
-
             const p1 = { x: this.c.x, y: this.c.y };
             const p2 = { x: this.c.x + this.h.x, y: this.c.y + this.h.y };
             const rx = this.rx, ry = this.ry;
-
-            // 1. Calcul des points de tangence (bords du cylindre)
             const { t1, t2 } = Utils.getEllipseTangents(rx, ry, this.h.x, this.h.y);
             const x1 = rx * Math.cos(t1), y1 = ry * Math.sin(t1);
             const x2 = rx * Math.cos(t2), y2 = ry * Math.sin(t2);
-
-            // 2. Zone cliquable (Hitbox)
             g.appendChild(Utils.createEl("ellipse", { cx: p1.x, cy: p1.y, rx, ry, class: "face face-base" }));
             const polyPts = `${p1.x + x1},${p1.y + y1} ${p1.x + x2},${p1.y + y2} ${p2.x + x2},${p2.y + y2} ${p2.x + x1},${p2.y + y1}`;
             const hit = Utils.createEl("polygon", { points: polyPts, class: "face" });
             g.appendChild(hit);
-
-            // 3. Dessin des bords (Arêtes latérales)
             g.appendChild(Utils.createEl("line", { x1: p1.x + x1, y1: p1.y + y1, x2: p2.x + x1, y2: p2.y + y1, class: "edge-solid" }));
             g.appendChild(Utils.createEl("line", { x1: p1.x + x2, y1: p1.y + y2, x2: p2.x + x2, y2: p2.y + y2, class: "edge-solid" }));
-
-            // 4. Définition des bases (P1 = Start, P2 = End)
-            // Si inversé, P1 est plein, P2 est coupé. Sinon l'inverse.
             const solidBaseCenter = this.inverted ? p1 : p2;
             const splitBaseCenter = this.inverted ? p2 : p1;
-
-            // 5. Dessin de la base PLEINE (toujours un cercle complet visible)
             g.appendChild(Utils.createEl("ellipse", { cx: solidBaseCenter.x, cy: solidBaseCenter.y, rx, ry, class: "edge-solid" }));
-
-            // 6. Dessin de la base COUPÉE (Demi-pointillé / Demi-plein)
-            // On calcule le point médian d'un des arcs pour savoir s'il pointe vers l'autre base
             const midAngle = (t1 + t2) / 2;
-            // Vecteur du centre vers ce point médian
             const vMidX = Math.cos(midAngle);
             const vMidY = Math.sin(midAngle);
-
-            // Direction de la hauteur (vers l'autre base ou s'en éloignant ?)
-            // Si on est sur P1, la hauteur va vers P2. Si on est sur P2, la hauteur "interne" va vers P1 (donc -h).
             const hDirX = this.inverted ? -this.h.x : this.h.x;
             const hDirY = this.inverted ? -this.h.y : this.h.y;
-
-            // Produit scalaire : Si > 0, l'arc pointe dans la même direction que le corps du cylindre => C'est l'intérieur (Pointillé)
-            // Note: ellipse scaling (rx, ry) affecte le vecteur normal visuel, mais le signe du produit scalaire reste bon pour la direction générale.
             const dotProd = (vMidX * rx * hDirX) + (vMidY * ry * hDirY);
-
-            // Points de départ et fin des arcs sur la base coupée
             const ptT1 = { x: splitBaseCenter.x + x1, y: splitBaseCenter.y + y1 };
             const ptT2 = { x: splitBaseCenter.x + x2, y: splitBaseCenter.y + y2 };
-
-            // Construction des chemins SVG
-            // Arc A : de T1 à T2
-            // Arc B : de T2 à T1
             const pathA = `M ${ptT1.x} ${ptT1.y} A ${rx} ${ry} 0 0 1 ${ptT2.x} ${ptT2.y}`;
             const pathB = `M ${ptT2.x} ${ptT2.y} A ${rx} ${ry} 0 0 1 ${ptT1.x} ${ptT1.y}`;
-
-            // Si le produit scalaire est positif, l'Arc A ("milieu" entre t1 et t2) est à l'intérieur
             if (dotProd > 0) {
-                g.appendChild(Utils.createEl("path", { d: pathA, class: "edge-dashed", fill: "none" })); // Intérieur
-                g.appendChild(Utils.createEl("path", { d: pathB, class: "edge-solid", fill: "none" }));  // Extérieur
+                g.appendChild(Utils.createEl("path", { d: pathA, class: "edge-dashed", fill: "none" })); 
+                g.appendChild(Utils.createEl("path", { d: pathB, class: "edge-solid", fill: "none" }));  
             } else {
-                g.appendChild(Utils.createEl("path", { d: pathB, class: "edge-dashed", fill: "none" })); // Intérieur
-                g.appendChild(Utils.createEl("path", { d: pathA, class: "edge-solid", fill: "none" }));  // Extérieur
+                g.appendChild(Utils.createEl("path", { d: pathB, class: "edge-dashed", fill: "none" })); 
+                g.appendChild(Utils.createEl("path", { d: pathA, class: "edge-solid", fill: "none" }));  
             }
-
             group.appendChild(g);
             return idx;
         }
-
         getData() { return { type: 'cylinder', c: this.c, rx: this.rx, ry: this.ry, h: this.h, orient: this.orient, inv: this.inverted, color: this.color }; }
     }
-
     class Cone extends Solid {
         constructor(c, rx, ry, h, o, i) { super(); this.c = { x: c.x, y: c.y }; this.rx = rx; this.ry = ry; this.h = { x: h.x, y: h.y }; this.orient = o; this.inverted = i; }
         invert() { this.inverted = !this.inverted; }
@@ -1617,10 +1406,7 @@
         }
         getData() { return { type: 'cone', c: this.c, rx: this.rx, ry: this.ry, h: this.h, orient: this.orient, inv: this.inverted, color: this.color }; }
     }
-
     class Sphere extends Solid { constructor(c, r) { super(); this.c = { x: c.x, y: c.y }; this.r = r; } render(g, l, i) { const el = Utils.createEl("g", { "data-id": this.id, class: "solid-group" }); el.style.setProperty('--stroke-color', this.color); if (this.selected) el.classList.add("selected"); const c = Utils.createEl("circle", { cx: this.c.x, cy: this.c.y, r: this.r, class: "face", style: "stroke:var(--stroke-color);stroke-width:2;fill:transparent" }); el.appendChild(c); el.appendChild(Utils.createEl("ellipse", { cx: this.c.x, cy: this.c.y, rx: this.r, ry: this.r * 0.3, class: "edge-dashed", fill: "none" })); g.appendChild(el); return i; } renderHandles(g) { g.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id })); g.appendChild(Utils.createEl("circle", { cx: this.c.x + this.r, cy: this.c.y, r: 5, class: "handle", "data-idx": 1, "data-sid": this.id })); } moveHandle(i, p) { if (i === 0) this.c = p; else this.r = Utils.dist(this.c, p); } getData() { return { type: 'sphere', c: this.c, r: this.r, color: this.color }; } }
-
-    // --- APP ---
     class App {
         constructor() {
             this.mode = 'select'; this.step = 0; this.solids = []; this.history = []; this.future = []; this.temp = {}; this.tgt = null; this.tgtIdx = null; this.tgtEdge = null; this.drag = null;
@@ -1633,28 +1419,22 @@ this.defaultPointStyle = 'cross';
             this.container = document.getElementById('main-container');
             this.scene = document.getElementById('world');
             this.inlineInput = document.getElementById('inline-input');
-
             const menuHeader = document.getElementById('menu-header');
             let isMenuDragging = false; let menuOffset = { x: 0, y: 0 };
             menuHeader.addEventListener('mousedown', e => { isMenuDragging = true; const rect = this.menu.getBoundingClientRect(); menuOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top }; e.preventDefault(); });
             document.addEventListener('mousemove', e => { if (isMenuDragging) { this.menu.style.left = (e.clientX - menuOffset.x) + 'px'; this.menu.style.top = (e.clientY - menuOffset.y) + 'px'; } });
             document.addEventListener('mouseup', () => { isMenuDragging = false; });
-
             this.menu.addEventListener('mousedown', e => e.stopPropagation());
             this.backdrop.addEventListener('mousedown', e => { e.stopPropagation(); this.closeMenu(); });
-
             this.svg.addEventListener('mousemove', e => this.onMove(e));
             this.svg.addEventListener('mousedown', e => {
                 if (e.button !== 0 && e.button !== 1) return;
                 if (this.menu.style.display === 'block') { this.closeMenu(); return; }
                 if (this.inlineInput.style.display === 'block') { this.confirmInlineInput(); return; }
-
                 if (e.button === 1 || (e.button === 0 && (this.mode === 'pan_tool' || e.getModifierState("Space")))) {
                     e.preventDefault(); this.drag = { type: 'pan', last: { x: e.clientX, y: e.clientY } }; this.viewport.classList.add('mode-pan_tool'); return;
                 }
-
                 if (this.mode === 'eraser') { this.onEraserClick(e); return; }
-
                 if (e.target.classList.contains('handle') && this.mode === 'select') { this.onHDown(e); return; }
                 if (e.target.classList.contains('vertex-label') && this.mode === 'select') { this.onLabelDown(e); return; }
                 if ((e.target.classList.contains('edge-hit') || e.target.classList.contains('free-text')) && (this.mode === 'select' || this.mode === 'coding')) {
@@ -1684,23 +1464,15 @@ this.defaultPointStyle = 'cross';
             });
             document.addEventListener('keyup', e => { if (e.code === "Space") this.viewport.classList.remove('mode-pan_tool'); });
         }
-
         toast(m) { this.pill.innerText = m; this.pill.classList.add('show'); clearTimeout(this.to); this.to = setTimeout(() => this.pill.classList.remove('show'), 3000); }
-
         toggleGrid() {
             const types = ['dots', 'squares', 'iso', 'none'];
-            // Labels pour le tooltip (infobulle)
             const labels = ['Grille: Points', 'Grille: Carreaux', 'Grille: Iso', 'Grille: Aucune'];
-
             let idx = types.indexOf(this.gridType);
             idx = (idx + 1) % types.length;
             this.gridType = types[idx];
-
-            // CORRECTION : On ne cherche plus à modifier 'lbl-grid' car il n'existe plus.
-            // À la place, on met à jour le titre du bouton pour l'infobulle
             const btn = document.querySelector('button[onclick="app.toggleGrid()"]');
             if (btn) btn.title = labels[idx];
-
             if (this.gridType === 'dots') this.bgRect.setAttribute('fill', 'url(#pat-dots)');
             else if (this.gridType === 'squares') this.bgRect.setAttribute('fill', 'url(#pat-squares)');
             else if (this.gridType === 'iso') this.bgRect.setAttribute('fill', 'url(#pat-iso)');
@@ -1708,17 +1480,12 @@ this.defaultPointStyle = 'cross';
         }
 cyclePointStyle() {
     const styles = ['cross', 'dot', 'pixel'];
-    // Trouve l'index actuel et passe au suivant
     let idx = styles.indexOf(this.defaultPointStyle);
     idx = (idx + 1) % styles.length;
     this.defaultPointStyle = styles[idx];
-
-    // Mise à jour de l'icône du bouton header
     const svg = document.getElementById('icon-pt-style');
-    svg.innerHTML = ''; // Vide l'icône actuelle
-    
+    svg.innerHTML = ''; 
     if (this.defaultPointStyle === 'cross') {
-        // Icône Croix
         const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
         p.setAttribute("d", "M8 8L16 16M16 8L8 16");
         p.setAttribute("stroke", "currentColor");
@@ -1727,22 +1494,18 @@ cyclePointStyle() {
         svg.appendChild(p);
         this.toast("Style par défaut : Croix");
     } else if (this.defaultPointStyle === 'dot') {
-        // Icône Rond
         const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         c.setAttribute("cx", "12"); c.setAttribute("cy", "12"); c.setAttribute("r", "4");
         c.setAttribute("fill", "currentColor");
         svg.appendChild(c);
         this.toast("Style par défaut : Cercle");
     } else {
-        // Icône Pixel
         const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         c.setAttribute("cx", "12"); c.setAttribute("cy", "12"); c.setAttribute("r", "2");
         c.setAttribute("fill", "currentColor");
         svg.appendChild(c);
         this.toast("Style par défaut : Pixel");
     }
-
-    // OPTIONNEL : Si des points sont sélectionnés, on change leur style immédiatement
     const selectedPoints = this.solids.filter(s => s.selected && s instanceof FreePoint);
     if (selectedPoints.length > 0) {
         this.saveState();
@@ -1750,16 +1513,13 @@ cyclePointStyle() {
         this.renderAll();
     }
 }
-
         updateView() { this.scene.setAttribute('transform', `translate(${this.view.x},${this.view.y}) scale(${this.view.z})`); }
         onWheel(e) { e.preventDefault(); const s = Math.exp(-e.deltaY * 0.001); const rect = this.svg.getBoundingClientRect(); const mx = e.clientX - rect.left; const my = e.clientY - rect.top; this.view.x = mx - (mx - this.view.x) * s; this.view.y = my - (my - this.view.y) * s; this.view.z *= s; this.updateView(); }
-
         getAllUsedLabels() { const used = new Set(); this.solids.forEach(s => { if (s.labels) s.labels.forEach(l => { if (l && l.t) used.add(l.t); }); }); return used; }
         getAvailableLabel(excluded = []) { const used = this.getAllUsedLabels(); excluded.forEach(x => used.add(x)); const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; for (let char of alphabet) { if (!used.has(char)) return char; } for (let char of alphabet) { if (!used.has(char + "'")) return char + "'"; } return "?"; }
         isLabelAvailable(lbl) { const used = this.getAllUsedLabels(); return !used.has(lbl); }
-
         findSolidVertexAt(p) {
-            const limit = 8; // Snap distance for existing vertices
+            const limit = 8; 
             for (let s of this.solids) {
                 if (s.vertices) {
                     for (let i = 0; i < s.vertices.length; i++) {
@@ -1768,22 +1528,17 @@ cyclePointStyle() {
                         }
                     }
                 }
-                // Check endpoints for segments
                 if (s instanceof Segment) {
                     if (Math.hypot(s.p1.x - p.x, s.p1.y - p.y) < limit) return { s, idx: 0 };
                     if (Math.hypot(s.p2.x - p.x, s.p2.y - p.y) < limit) return { s, idx: 1 };
                 }
-                // Check free points
                 if (s instanceof FreePoint) {
                     if (Math.hypot(s.p.x - p.x, s.p.y - p.y) < limit) return { s, idx: 0 };
                 }
             }
             return null;
         }
-
-        // Keep this for segment creation naming logic
         findPointLabel(p) { const res = this.findSolidVertexAt(p); if (res && res.s.labels && res.s.labels[res.idx]) return res.s.labels[res.idx].t; return null; }
-
         changeLabel(dir) {
             if (!this.tgt || this.tgtIdx === null) return; const s = this.solids.find(x => x.id == this.tgt); if (!s || !s.labels[this.tgtIdx]) return;
             const current = s.labels[this.tgtIdx].t; const match = current.match(/^([A-Z])('*)?$/); if (!match) return;
@@ -1792,141 +1547,118 @@ cyclePointStyle() {
             while (attempts < 100) { if (dir > 0) { if (charCode < 90) charCode++; else { charCode = 65; primes += "'"; } } else { if (charCode > 65) charCode--; else { charCode = 90; if (primes.length > 0) primes = primes.slice(0, -1); } } newVal = String.fromCharCode(charCode) + primes; if (this.isLabelAvailable(newVal)) break; attempts++; }
             this.saveState(); s.labels[this.tgtIdx].t = newVal; document.getElementById('menu-letter-val').innerText = newVal; this.renderAll();
         }
-
         deselectAll() { let changed = false; this.solids.forEach(s => { if (s.selected) { s.selected = false; changed = true; } if (s.selectedEdge) { s.selectedEdge = null; changed = true; } }); if (changed) this.renderAll(); }
         onEdgeDown(e) { e.stopPropagation(); const sid = e.target.getAttribute('data-sid'); const edgeKey = e.target.getAttribute('data-edge-key'); const s = this.solids.find(x => x.id == sid); if (!s) return; if (this.mode === 'coding') { this.saveState(); if (s instanceof Segment) { let idx = MARK_TYPES.indexOf(s.mark || 'none'); idx = (idx + 1) % MARK_TYPES.length; s.mark = MARK_TYPES[idx]; } else { if (!s.edgeMarks) s.edgeMarks = {}; const current = s.edgeMarks[edgeKey] || 'none'; let idx = MARK_TYPES.indexOf(current); idx = (idx + 1) % MARK_TYPES.length; s.edgeMarks[edgeKey] = MARK_TYPES[idx]; } this.renderAll(); return; } this.deselectAll(); s.selectedEdge = edgeKey; this.renderAll(); }
         onSolidDown(e, sid) { e.stopPropagation(); const s = this.solids.find(x => x.id == sid); if (!s) return; this.deselectAll(); s.selected = true; this.renderAll(); const el = document.querySelector(`.solid-group[data-id="${sid}"]`); if (el) el.classList.add('is-dragging'); const p = this.getMouse(e); this.drag = { type: 'solid', s: s, lastPos: { x: p.x, y: p.y } }; this.saveState(); }
         onEraserClick(e) { const t = e.target; const group = t.closest('g.solid-group'); if (group) { const sid = group.getAttribute('data-id'); this.saveState(); this.solids = this.solids.filter(s => s.id != sid); this.renderAll(); this.toast("Objet supprimé"); } }
-
         autoCode() {
             this.saveState(); const edges = []; this.solids.forEach(s => { if (s instanceof Segment) { edges.push({ s: s, key: null, len: Utils.dist(s.p1, s.p2) }); } else if (s instanceof Polyhedron) { const em = new Map(); s.facesIndices.forEach((ids, fi) => { for (let i = 0; i < ids.length; i++) { const a = ids[i], b = ids[(i + 1) % ids.length], k = a < b ? `${a}-${b}` : `${b}-${a}`; em.set(k, true); } }); em.forEach((_, k) => { const [i1, i2] = k.split('-').map(Number); edges.push({ s: s, key: k, len: Utils.dist(s.vertices[i1], s.vertices[i2]) }); }); } });
             const groups = {}; edges.forEach(e => { let found = false; for (const lenStr in groups) { if (Math.abs(parseFloat(lenStr) - e.len) < 0.5) { groups[lenStr].push(e); found = true; break; } } if (!found) groups[e.len] = [e]; });
             const marks = ['simple', 'double', 'triple', 'cross', 'cross2', 'circle', 'circle2']; let markIdx = 1; for (const len in groups) { const group = groups[len]; if (group.length > 1) { const mark = marks[markIdx % marks.length]; group.forEach(item => { if (item.key) { if (!item.s.edgeMarks) item.s.edgeMarks = {}; item.s.edgeMarks[item.key] = mark; } else { item.s.mark = mark; } }); markIdx++; } }
             this.renderAll(); this.toast("Codage automatique terminé !");
         }
-
         saveProject() { const data = JSON.stringify(this.solids.map(s => s.getData())); const blob = new Blob([data], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "projet_geomaster.geo"; a.click(); URL.revokeObjectURL(url); this.toast("Projet sauvegardé !"); }
         loadProject() { document.getElementById('file-input').click(); }
         handleFileSelect(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { this.saveState(); this.loadState(e.target.result); this.toast("Projet chargé !"); } catch (err) { this.toast("Erreur de fichier"); } }; reader.readAsText(file); input.value = ''; }
-
-        getCleanSVGString() {
-            // 1. Cloner le SVG entier
-            const clone = this.svg.cloneNode(true);
-
-            // 2. Supprimer les calques d'interface inutiles
-            const handles = clone.getElementById('layer-handles');
-            const ghost = clone.getElementById('layer-ghost');
-            const snap = clone.getElementById('snap-marker');
-            const bgRect = clone.getElementById('bg-rect');
-
-            if (handles) handles.remove();
-            if (ghost) ghost.remove();
-            if (snap) snap.remove();
-            if (bgRect) bgRect.remove();
-
-            // Supprimer les zones de hit (les gros traits invisibles sur les segments)
-            clone.querySelectorAll('.edge-hit').forEach(el => el.remove());
-
-            // 3. Parcourir tous les éléments restants pour corriger les styles par défaut
-            clone.querySelectorAll('*').forEach(el => {
-
-                // CAS 1 : Les zones de clic invisibles (Cubes, Prismes, Points)
-                // Si on ne met pas fill="none", le SVG les affiche en NOIR par défaut.
-                if (el.classList.contains('face') || el.classList.contains('face-base')) {
-                    el.setAttribute("fill", "none");
-                    el.setAttribute("stroke", "none");
-                }
-
-                // CAS 2 : Les polygones personnalisés (Outil "Créer Face")
-                // Ils ont déjà un attribut fill="..." via le JS. 
-                // On s'assure juste que s'ils n'ont pas de bordure, le stroke est à none.
-                else if (el.classList.contains('custom-face')) {
-                    if (!el.hasAttribute('stroke')) {
-                        el.setAttribute("stroke", "none");
-                    }
-                    // Important : on ne touche PAS à l'attribut "fill" existant, il est déjà bon.
-                }
-
-                // CAS 3 : Les lignes (Segments, arêtes)
-                else if (el.classList.contains('edge-solid') || el.classList.contains('edge-dashed')) {
-                    el.setAttribute("stroke", "#1d1d1f"); // Couleur du trait
-                    el.setAttribute("fill", "none");      // Important pour ne pas remplir la forme formée par les lignes
-                    el.setAttribute("stroke-width", "1.5");
-                    el.setAttribute("stroke-linecap", "round");
-                    el.setAttribute("stroke-linejoin", "round");
-
-                    if (el.classList.contains('edge-dashed')) {
-                        el.setAttribute("stroke-dasharray", "5,5");
-                    } else {
-                        el.removeAttribute("stroke-dasharray");
-                    }
-                }
-
-                // CAS 4 : Le texte
-                else if (el.tagName === 'text') {
-                    el.setAttribute("fill", "#1d1d1f");
-                    el.setAttribute("stroke", "none");
-                    el.style.fontFamily = "sans-serif";
-                    el.style.fontWeight = "bold";
-                }
-
-                // CAS 5 : Les points (Cercles)
-                // On vérifie que c'est bien une "face" de point et pas un handle supprimé
-                else if (el.tagName === 'circle' && el.getAttribute('r') <= 4) {
-                    // On garde la couleur de remplissage actuelle (currentColor ou attribut fill)
-                    // Si pas de fill défini, on met noir ou la couleur de l'objet
-                    if (!el.getAttribute('fill')) el.setAttribute("fill", "#1d1d1f");
-                    el.setAttribute("stroke", "none");
-                }
-            });
-
-            return new XMLSerializer().serializeToString(clone);
+getCleanSVGString() {
+    const clone = this.svg.cloneNode(true);
+    const world = clone.getElementById('world');
+    if (world) world.removeAttribute('transform');
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    if (this.solids.length === 0) {
+        minX = 0; minY = 0; maxX = 800; maxY = 600;
+    } else {
+        this.solids.forEach(s => {
+            const check = (x, y) => {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            };
+            if (s.p) check(s.p.x, s.p.y); 
+            if (s.c) { 
+                const r = s.r || (s.rx ? Math.max(s.rx, s.ry) : 0);
+                check(s.c.x - r, s.c.y - r);
+                check(s.c.x + r, s.c.y + r);
+                if (s.h) check(s.c.x + s.h.x, s.c.y + s.h.y);
+            }
+            if (s.p1 && s.p2) { check(s.p1.x, s.p1.y); check(s.p2.x, s.p2.y); } 
+            if (s.vertices) s.vertices.forEach(v => check(v.x, v.y)); 
+        });
+    }
+    const padding = 50; 
+    const width = (maxX - minX) + (padding * 2);
+    const height = (maxY - minY) + (padding * 2);
+    const viewBoxX = minX - padding;
+    const viewBoxY = minY - padding;
+    clone.setAttribute("viewBox", `${viewBoxX} ${viewBoxY} ${width} ${height}`);
+    clone.setAttribute("width", width);
+    clone.setAttribute("height", height);
+    const handles = clone.getElementById('layer-handles');
+    const ghost = clone.getElementById('layer-ghost');
+    const snap = clone.getElementById('snap-marker');
+    const bgRect = clone.getElementById('bg-rect');
+    if (handles) handles.remove();
+    if (ghost) ghost.remove();
+    if (snap) snap.remove();
+    if (bgRect) bgRect.remove();
+    clone.querySelectorAll('.edge-hit').forEach(el => el.remove());
+    clone.querySelectorAll('*').forEach(el => {
+        if (el.classList.contains('face') || el.classList.contains('face-base')) {
+            el.setAttribute("fill", "none");
+            el.setAttribute("stroke", "none");
         }
-
-
-        exportTikZ() {
-            // 1. En-tête LaTeX
-            let tex = "% --- Code TikZ généré par GéoMaster 3D ---\n";
-            tex += "\\begin{tikzpicture}[line cap=round, line join=round, >=triangle 45, x=1cm, y=1cm]\n";
-            tex += "\\begin{scope}[yscale=-1, scale=0.025]\n";
-
-            // Gestionnaire de couleurs pour éviter les doublons
+        else if (el.classList.contains('custom-face')) {
+            if (!el.hasAttribute('stroke')) {
+                el.setAttribute("stroke", "none");
+            }
+        }
+        else if (el.classList.contains('edge-solid') || el.classList.contains('edge-dashed')) {
+            el.setAttribute("stroke", "#1d1d1f");
+            el.setAttribute("fill", "none");
+            el.setAttribute("stroke-width", "1.5");
+            el.setAttribute("stroke-linecap", "round");
+            el.setAttribute("stroke-linejoin", "round");
+            if (el.classList.contains('edge-dashed')) {
+                el.setAttribute("stroke-dasharray", "5,5");
+            } else {
+                el.removeAttribute("stroke-dasharray");
+            }
+        }
+        else if (el.tagName === 'text') {
+            el.setAttribute("fill", "#1d1d1f");
+            el.setAttribute("stroke", "none");
+            el.style.fontFamily = "sans-serif";
+            el.style.fontWeight = "bold";
+        }
+        else if (el.tagName === 'circle' && el.getAttribute('r') <= 4) {
+            if (!el.getAttribute('fill')) el.setAttribute("fill", "#1d1d1f");
+            el.setAttribute("stroke", "none");
+        }
+    });
+    return new XMLSerializer().serializeToString(clone);
+}
+      exportTikZ() {
             const colorMap = new Map();
             let colorCounter = 1;
-
-            // Fonction utilitaire pour parser rgb(r, g, b) du CSS
             const parseColor = (str) => {
                 if (!str || str === 'none' || str === 'transparent' || str === 'rgba(0, 0, 0, 0)') return null;
                 const m = str.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
                 if (m) return { r: m[1], g: m[2], b: m[3], hex: `${m[1]},${m[2]},${m[3]}` };
-                return null; // Cas hex ou autre non géré par computedStyle généralement
+                return null; 
             };
-
-            // 2. On parcourt les éléments RÉELS du DOM (pas un clone) pour avoir les styles CSS exacts
-            // On exclut les calques d'interface
             const elements = this.svg.querySelectorAll('#layer-solids *, #world > circle, #world > line, #world > text, #world > path, #world > polygon');
-
-            let bodyTex = ""; // On stocke le corps pour l'écrire après les définitions de couleurs
-
+            let bodyTex = ""; 
             elements.forEach(el => {
-                // Ignorer l'interface
                 if (el.closest('#layer-handles') || el.closest('#layer-ghost') || el.id === 'snap-marker') return;
-                if (el.classList.contains('edge-hit')) return; // Zones de clic
-                if (el.classList.contains('face') || el.classList.contains('face-base')) return; // Faces invisibles
-
-                // Récupération du style réel
+                if (el.classList.contains('edge-hit') || el.classList.contains('face') || el.classList.contains('face-base')) return; 
                 const style = window.getComputedStyle(el);
                 const sColor = parseColor(style.stroke);
                 const fColor = parseColor(style.fill);
-
                 let opts = [];
-                let cmd = "\\draw"; // Par défaut
-
-                // --- GESTION COULEUR ---
+                let cmd = "\\draw"; 
                 let usedColor = null;
                 let isFill = false;
-
-                // Logique de priorité : Remplissage > Contour
                 if (fColor && (el.tagName === 'polygon' || el.tagName === 'circle' || el.tagName === 'path')) {
                     usedColor = fColor;
                     isFill = true;
@@ -1934,33 +1666,21 @@ cyclePointStyle() {
                 } else if (sColor) {
                     usedColor = sColor;
                 }
-
-                // Enregistrement de la couleur pour \definecolor
-                let colName = "black";
                 if (usedColor) {
                     const key = usedColor.hex;
+                    let colName = "black";
                     if (colorMap.has(key)) {
                         colName = colorMap.get(key);
                     } else {
                         colName = `col${colorCounter++}`;
                         colorMap.set(key, colName);
                     }
-
-                    if (isFill) opts.push(`fill=${colName}, color=${colName}`); // color pour le bord du point
+                    if (isFill) opts.push(`fill=${colName}, color=${colName}`); 
                     else opts.push(`color=${colName}`);
                 }
-
-                // --- GESTION STYLE ---
-                // Dasharray : si le CSS renvoie autre chose que 'none'
                 if (style.strokeDasharray !== 'none' && style.strokeDasharray !== '') opts.push("dashed");
-                // Opacité
                 if (isFill && style.fillOpacity < 1) opts.push(`opacity=${style.fillOpacity}`);
-
                 const optionsStr = opts.length > 0 ? `[${opts.join(", ")}]` : "";
-
-                // --- GÉNÉRATION GÉOMÉTRIE ---
-
-                // A. LIGNES
                 if (el.tagName === 'line') {
                     const x1 = parseFloat(el.getAttribute('x1')).toFixed(2);
                     const y1 = parseFloat(el.getAttribute('y1')).toFixed(2);
@@ -1968,49 +1688,33 @@ cyclePointStyle() {
                     const y2 = parseFloat(el.getAttribute('y2')).toFixed(2);
                     bodyTex += `\\draw${optionsStr} (${x1}, ${y1}) -- (${x2}, ${y2});\n`;
                 }
-
-                // B. POLYGONES
                 else if (el.tagName === 'polygon') {
                     const pts = el.getAttribute('points').trim().split(/\s+/).map(p => {
                         const [x, y] = p.split(',');
                         return `(${parseFloat(x).toFixed(2)}, ${parseFloat(y).toFixed(2)})`;
                     }).join(' -- ');
-
                     if (isFill) {
-                        if (style.fill.includes('url')) {
-                            bodyTex += `\\fill[pattern=north east lines] ${pts} -- cycle;\n`;
-                        } else {
-                            bodyTex += `\\fill${optionsStr} ${pts} -- cycle;\n`;
-                        }
+                        if (style.fill.includes('url')) bodyTex += `\\fill[pattern=north east lines] ${pts} -- cycle;\n`;
+                        else bodyTex += `\\fill${optionsStr} ${pts} -- cycle;\n`;
                     }
-                    // Si bordure visible en plus du remplissage
                     if (style.stroke !== 'none' && parseFloat(style.strokeWidth) > 0) {
-                        // On dessine le contour sans le fill
                         const borderOpts = opts.filter(o => !o.startsWith('fill=') && !o.startsWith('opacity=')).join(", ");
                         const bStr = borderOpts ? `[${borderOpts}]` : "";
                         bodyTex += `\\draw${bStr} ${pts} -- cycle;\n`;
                     }
                 }
-
-                // C. POINTS & CERCLES
                 else if (el.tagName === 'circle') {
                     const cx = parseFloat(el.getAttribute('cx')).toFixed(2);
                     const cy = parseFloat(el.getAttribute('cy')).toFixed(2);
                     const rVal = parseFloat(el.getAttribute('r'));
-
                     if (rVal < 5) {
-                        // C'est un POINT (sommet) -> Taille fixe en pt
-                        // Si pas de couleur définie, on force le noir pour qu'il se voie
                         let ptOpts = optionsStr;
                         if (!usedColor) ptOpts = "[fill=black]";
                         bodyTex += `\\fill${ptOpts} (${cx}, ${cy}) circle (2.5pt);\n`;
                     } else {
-                        // C'est une sphère -> Taille à l'échelle
                         bodyTex += `\\draw${optionsStr} (${cx}, ${cy}) circle (${rVal.toFixed(2)});\n`;
                     }
                 }
-
-                // D. ELLIPSES
                 else if (el.tagName === 'ellipse') {
                     const cx = parseFloat(el.getAttribute('cx')).toFixed(2);
                     const cy = parseFloat(el.getAttribute('cy')).toFixed(2);
@@ -2018,8 +1722,6 @@ cyclePointStyle() {
                     const ry = parseFloat(el.getAttribute('ry')).toFixed(2);
                     bodyTex += `\\draw${optionsStr} (${cx}, ${cy}) ellipse (${rx} and ${ry});\n`;
                 }
-
-                // E. TEXTE
                 else if (el.tagName === 'text') {
                     const x = parseFloat(el.getAttribute('x')).toFixed(2);
                     const y = parseFloat(el.getAttribute('y')).toFixed(2);
@@ -2029,30 +1731,46 @@ cyclePointStyle() {
                     else if (el.getAttribute('text-anchor') === 'end') anc = ", anchor=east";
                     bodyTex += `\\node[color=black${anc}] at (${x}, ${y}) {${txt}};\n`;
                 }
-
-                // F. ARCS (Path)
                 else if (el.tagName === 'path') {
                     const d = el.getAttribute('d');
                     if (d && d.includes('A')) {
-                        const match = d.match(/M\s*([\d.-]+)\s+([\d.-]+).*?A\s*([\d.-]+)\s+([\d.-]+).*?([\d.-]+)\s+([\d.-]+)/);
+                        const match = d.match(/M\s*([\d.-]+)[\s,]+([\d.-]+)\s*A\s*([\d.-]+)[\s,]+([\d.-]+)[\s,]+([\d.-]+)[\s,]+([\d.-]+)[\s,]+([\d.-]+)[\s,]+([\d.-]+)[\s,]+([\d.-]+)/);
                         if (match) {
-                            const [_, mx, my, rx, ry, ex, ey] = match;
-                            bodyTex += `\\draw${optionsStr} (${parseFloat(mx).toFixed(2)}, ${parseFloat(my).toFixed(2)}) arc[x radius=${parseFloat(rx).toFixed(2)}, y radius=${parseFloat(ry).toFixed(2)}, start angle=180, end angle=360];\n`;
+                            const mx = parseFloat(match[1]); 
+                            const my = parseFloat(match[2]); 
+                            const rx = parseFloat(match[3]); 
+                            const ry = parseFloat(match[4]); 
+                            const sweep = parseInt(match[7]); 
+                            const ex = parseFloat(match[8]); 
+                            const ey = parseFloat(match[9]); 
+                            const cx = (mx + ex) / 2;
+                            const cy = (my + ey) / 2;
+                            let startAng = Math.atan2((my - cy) / ry, (mx - cx) / rx) * 180 / Math.PI;
+                            let endAng = Math.atan2((ey - cy) / ry, (ex - cx) / rx) * 180 / Math.PI;
+                            if (startAng < 0) startAng += 360;
+                            if (endAng < 0) endAng += 360;
+                            if (sweep === 1) {
+                                if (endAng <= startAng) endAng += 360;
+                            } else {
+                                if (endAng >= startAng) endAng -= 360;
+                            }
+                            bodyTex += `\\draw${optionsStr} (${mx.toFixed(2)}, ${my.toFixed(2)}) arc (${startAng.toFixed(2)}:${endAng.toFixed(2)}:${rx.toFixed(2)} and ${ry.toFixed(2)});\n`;
                         }
                     }
                 }
             });
-
-            // 3. Insertion des définitions de couleurs au début
+            let tex = "% --- Code TikZ généré par GéoMaster 3D ---\n";
+            tex += "\\documentclass{article}\n";
+            tex += "\\usepackage{tikz}\n";
+            tex += "\\usepackage{xcolor}\n\n";
             colorMap.forEach((name, rgb) => {
                 tex += `\\definecolor{${name}}{RGB}{${rgb}}\n`;
             });
-
-            tex += bodyTex; // Ajout du corps
-            tex += "\\end{scope}\n";
-            tex += "\\end{tikzpicture}";
-
-            // Téléchargement
+            tex += "\n\\begin{document}\n\n";
+            tex += "\\begin{tikzpicture}[line cap=round, line join=round, x=0.025cm, y=-0.025cm]\n\n";
+            tex += bodyTex; 
+            tex += "\n\\end{tikzpicture}\n\n";
+            tex += "\\end{document}\n";
             const blob = new Blob([tex], { type: "text/plain;charset=utf-8" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -2062,40 +1780,47 @@ cyclePointStyle() {
             URL.revokeObjectURL(url);
             this.toast("Code TikZ exporté !");
         }
-
         exportSVG() { const svgData = this.getCleanSVGString(); const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "figure_geomaster.svg"; a.click(); URL.revokeObjectURL(url); this.toast("SVG Exporté !"); }
-
-        exportPNG() {
-            const svgData = this.getCleanSVGString();
-            const img = new Image();
-            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                // Use SVG bbox to fit content or full view? Let's use current viewport size
-                canvas.width = this.svg.clientWidth; canvas.height = this.svg.clientHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0);
-                const a = document.createElement("a"); a.download = "figure_geomaster.png"; a.href = canvas.toDataURL("image/png"); a.click();
-                this.toast("PNG Exporté !");
-            };
-        }
-
-        copyImage() {
-            const svgData = this.getCleanSVGString();
-            const img = new Image();
-            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-            img.onload = () => {
-                const canvas = document.createElement('canvas'); canvas.width = this.svg.clientWidth; canvas.height = this.svg.clientHeight;
-                const ctx = canvas.getContext('2d'); ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0);
-                canvas.toBlob(blob => { navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(() => this.toast("Copié !")); });
-            };
-        }
-
+ exportPNG() {
+    const svgData = this.getCleanSVGString();
+    const img = new Image();
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width; 
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = "white"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        const a = document.createElement("a"); 
+        a.download = "figure_geomaster.png"; 
+        a.href = canvas.toDataURL("image/png"); 
+        a.click();
+        this.toast("PNG Exporté (Recadré) !");
+    };
+}
+copyImage() {
+    const svgData = this.getCleanSVGString();
+    const img = new Image();
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width; 
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = "white"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(blob => {
+            navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+                .then(() => this.toast("Copié (Recadré) !"));
+        });
+    };
+}
         togglePrime() { if (!this.tgt || this.tgtIdx === null) return; const s = this.solids.find(x => x.id == this.tgt); if (!s || !s.labels[this.tgtIdx]) return; let current = s.labels[this.tgtIdx].t; if (current.endsWith("'")) { current = current.slice(0, -1); } else { current += "'"; } if (this.isLabelAvailable(current)) { s.labels[this.tgtIdx].t = current; document.getElementById('menu-letter-val').innerText = current; this.saveState(); this.renderAll(); } else { this.toast("Nom déjà pris !"); } }
         changeFaceOpacity(val) { if (!this.tgt) return; const s = this.solids.find(x => x.id == this.tgt); if (s && s instanceof PolyFace) { s.opacity = val; this.renderAll(); } }
         onLabelWheel(e) { e.preventDefault(); this.changeLabel(e.deltaY > 0 ? 1 : -1); }
-
         openMenu(e, id, idx = null, edgeKey = null) {
             this.tgt = id; this.tgtIdx = idx; this.tgtEdge = edgeKey;
             const letterArea = document.getElementById('menu-letter-area'); const styleSeg = document.getElementById('menu-style-segment'); const stylePt = document.getElementById('menu-style-point'); const styleFace = document.getElementById('menu-style-face'); const sep = document.getElementById('menu-sep-1');
@@ -2111,7 +1836,6 @@ cyclePointStyle() {
             let mx = e.clientX; let my = e.clientY; const menuW = 210; const menuH = 300; if (mx + menuW > window.innerWidth) mx = window.innerWidth - menuW - 10; if (my + menuH > window.innerHeight) my = window.innerHeight - menuH - 10;
             this.menu.style.left = mx + 'px'; this.menu.style.top = my + 'px'; this.menu.style.display = 'block'; this.backdrop.style.display = 'block';
         }
-
         closeMenu() { this.menu.style.display = 'none'; this.backdrop.style.display = 'none'; this.tgt = null; this.tgtIdx = null; this.tgtEdge = null; }
         menuAction(a, v) {
             if (!this.tgt) return; this.saveState(); const s = this.solids.find(x => x.id == this.tgt);
@@ -2124,7 +1848,6 @@ cyclePointStyle() {
             else if (a === 'z-back') { const idx = this.solids.indexOf(s); if (idx > -1) { this.solids.splice(idx, 1); this.solids.unshift(s); } }
             this.renderAll(); this.closeMenu();
         }
-
         saveState() { this.history.push(JSON.stringify(this.solids.map(s => s.getData()))); this.future = []; }
         loadState(s) {
             this.solids = JSON.parse(s).map(d => {
@@ -2133,7 +1856,6 @@ cyclePointStyle() {
                 else if (d.type === 'freepoint') { o = new FreePoint(d.p, (d.labels && d.labels[0]) ? d.labels[0].t : ""); if (d.pStyle) o.pStyle = d.pStyle; }
                 else if (d.type === 'freetext') { o = new FreeText(d.p, d.text); }
                 else if (d.type === 'segment') { 
-    // MODIFICATION ICI : On passe d.pStyle
     o = new Segment(d.p1, d.p2, null, null, d.pStyle); 
     if (d.lineStyle) o.lineStyle = d.lineStyle; 
     if (d.mark) o.mark = d.mark; 
@@ -2144,7 +1866,6 @@ cyclePointStyle() {
         }
         undo() { if (this.history.length) { this.future.push(JSON.stringify(this.solids.map(s => s.getData()))); this.loadState(this.history.pop()); } }
         redo() { if (this.future.length) { this.history.push(JSON.stringify(this.solids.map(s => s.getData()))); this.loadState(this.future.pop()); } }
-
         getMouse(e) {
             const rect = this.svg.getBoundingClientRect();
             const sx = e.clientX - rect.left; const sy = e.clientY - rect.top;
@@ -2161,17 +1882,14 @@ cyclePointStyle() {
             }
             this.marker.classList.remove("visible"); this.marker.classList.remove("snapped-point"); return { x: wx, y: wy };
         }
-
         setMode(m, b) {
             this.mode = m; this.step = 0; this.temp = {}; this.lGhost.innerHTML = ''; document.querySelectorAll('.btn, .btn-select').forEach(x => x.classList.remove('active')); if (b) b.classList.add('active'); if (m === 'select') { this.viewport.classList.add('mode-select'); this.viewport.classList.remove('mode-eraser'); this.viewport.classList.remove('mode-pan_tool'); this.toast("Mode Édition"); this.renderAll(); return; }
             if (m === 'eraser') { this.viewport.classList.add('mode-eraser'); this.toast("Mode Gomme"); return; }
             if (m === 'pan_tool') { this.viewport.classList.add('mode-pan_tool'); this.toast("Mode Déplacement"); return; }
             this.viewport.classList.remove('mode-select'); this.viewport.classList.remove('mode-eraser'); this.viewport.classList.remove('mode-pan_tool'); this.toast("Mode Création activé"); this.renderAll();
         }
-
         onHDown(e) { if (this.mode !== 'select' && this.mode !== 'face_poly') return; e.stopPropagation(); this.drag = { type: 'handle', s: this.solids.find(x => x.id == e.target.getAttribute('data-sid')), i: e.target.getAttribute('data-idx') }; this.saveState(); }
         onLabelDown(e) { e.stopPropagation(); this.drag = { type: 'label', s: this.solids.find(x => x.id == e.target.getAttribute('data-sid')), i: e.target.getAttribute('data-idx') }; this.saveState(); }
-
         renderAll() {
             this.lSolids.innerHTML = ''; this.lHandles.innerHTML = ''; const l = document.getElementById('chkNames').checked; let i = 0; const showHandles = (this.mode === 'select' || this.mode === 'face_poly');
             this.solids.forEach(s => { i = s.render(this.lSolids, l, i); if (showHandles) s.renderHandles(this.lHandles); });
@@ -2183,34 +1901,26 @@ cyclePointStyle() {
                 });
             }
         }
-
         showInlineInput(x, y, val, callback) {
             const rect = this.svg.getBoundingClientRect(); const sx = (x * this.view.z) + this.view.x + rect.left; const sy = (y * this.view.z) + this.view.y + rect.top;
             this.inlineInput.style.left = sx + 'px'; this.inlineInput.style.top = sy + 'px'; this.inlineInput.value = val; this.inlineInput.style.display = 'block'; this.inlineInput.focus(); this.inputCallback = callback;
         }
         confirmInlineInput() { if (this.inputCallback) this.inputCallback(this.inlineInput.value); this.inlineInput.style.display = 'none'; this.inputCallback = null; }
         cancelInlineInput() { this.inlineInput.style.display = 'none'; this.inputCallback = null; }
-
         renameLabel(e) { e.stopPropagation(); const sid = e.target.getAttribute('data-sid'), idx = e.target.getAttribute('data-idx'); const s = this.solids.find(x => x.id == sid); if (s && s.labels[idx]) { const p = s.vertices ? s.vertices[idx] : s.p; this.showInlineInput(p.x, p.y, s.labels[idx].t, (val) => { if (val !== null) { this.saveState(); s.labels[idx].t = val; this.renderAll(); } }); } }
         renameText(e) { e.stopPropagation(); const g = e.target.closest('g'); if (g) { const s = this.solids.find(x => x.id == g.getAttribute('data-id')); if (s instanceof FreeText) { this.showInlineInput(s.p.x, s.p.y, s.text, (val) => { if (val) { this.saveState(); s.text = val; this.renderAll(); } }); } } }
-
         onClick(e) {
             if (this.mode === 'select' || this.mode === 'eraser' || this.mode === 'pan_tool' || !this.mode) return; const p = this.getMouse(e);
             if (this.mode === 'text') { this.showInlineInput(p.x, p.y, "", (val) => { if (val) { this.saveState(); this.solids.push(new FreeText(p, val)); this.finish(); } }); return; }
-
             if (this.mode === 'free_point') {
                 const existing = this.findSolidVertexAt(p);
                 if (existing) {
                     const { s, idx } = existing;
-                    // If label exists, just warn
                     if (s.labels[idx] && s.labels[idx].t) {
                         this.toast("Sommet déjà nommé : " + s.labels[idx].t);
                     } else {
-                        // Else, give it a name !
                         this.saveState();
-                        // Init labels array if missing
                         if (!s.labels) s.labels = [];
-                        // Create label
                         s.labels[idx] = { t: this.getAvailableLabel(), ang: -Math.PI / 4, dist: 20 };
                         this.renderAll();
                         this.toast("Sommet nommé");
@@ -2238,10 +1948,7 @@ cyclePointStyle() {
         this.saveState();
         let l1 = this.findPointLabel(this.temp.p1); if (l1) l1 = ""; else l1 = this.getAvailableLabel();
         let l2 = this.findPointLabel(p); if (l2) l2 = ""; else { const excl = (l1 === "") ? [] : [l1]; l2 = this.getAvailableLabel(excl); }
-        
-        // MODIFICATION ICI : On passe this.defaultPointStyle en dernier argument
         this.solids.push(new Segment(this.temp.p1, p, l1, l2, this.defaultPointStyle));
-        
         this.finish();
     }
 }
@@ -2263,7 +1970,6 @@ cyclePointStyle() {
                 else if (this.step === 3) { this.saveState(); const h = { x: p.x - this.temp.c.x, y: p.y - this.temp.c.y }; const o = this.mode.includes('bot') ? 'bot' : 'front'; const c = { x: this.temp.c.x, y: this.temp.c.y }; let g; if (this.mode.includes('cyl')) g = new Cylinder(c, this.temp.r, this.temp.ry, h, o); else g = new Cone(c, this.temp.r, this.temp.ry, h, o); this.solids.push(g); this.finish(); }
             }
         }
-
         onMove(e) {
             if (this.drag && this.drag.type === 'pan') { const dx = e.clientX - this.drag.last.x; const dy = e.clientY - this.drag.last.y; this.view.x += dx; this.view.y += dy; this.drag.last = { x: e.clientX, y: e.clientY }; this.updateView(); return; }
             const p = this.getMouse(e);
@@ -2298,28 +2004,23 @@ cyclePointStyle() {
                 else if (this.step === 3) { const h = { x: p.x - this.temp.c.x, y: p.y - this.temp.c.y }; const o = this.mode.includes('bot') ? 'bot' : 'front'; const c = { x: this.temp.c.x, y: this.temp.c.y }; let g; if (this.mode.includes('cyl')) g = new Cylinder(c, r, this.temp.ry, h, o); else g = new Cone(c, r, this.temp.ry, h, o); this.renderGhost(g); }
             }
         }
-
         renderGhost(s) { s.selected = true; s.render(this.lGhost, false, 0); }
         finish() { this.step = 0; this.temp = {}; this.lGhost.innerHTML = ''; this.renderAll(); this.toast("Forme créée"); }
         clear() { this.saveState(); this.solids = []; this.renderAll(); }
     }
     const app = new App();
-
     const style = document.createElement('style');
     style.innerHTML = `
         #layer-handles.show-all .handle { display: block; opacity: 0.6; }
         #layer-handles.show-all .handle:hover { opacity: 1; fill: var(--accent); stroke: white; }
     `;
     document.head.appendChild(style);
-
     function toggleHeaderBtn(inputId, btn) {
         const inp = document.getElementById(inputId);
         inp.click();
         if (inp.checked) btn.classList.add('active');
         else btn.classList.remove('active');
     }
-
-    // Patch visuel pour le mode sélection
     const _oldSetMode = app.setMode;
     app.setMode = function (m, b) {
         document.querySelectorAll('.h-btn').forEach(btn => {
@@ -2328,20 +2029,15 @@ cyclePointStyle() {
         if (b && b.classList.contains('h-btn')) b.classList.add('active');
         if (typeof _oldSetMode === 'function') _oldSetMode.call(app, m, b);
     };
-
     function openDonateModal() {
         document.getElementById('donateModal').style.display = 'flex';
     }
-
     function closeDonateModal() {
         document.getElementById('donateModal').style.display = 'none';
     }
-
-    // Fermer en cliquant à côté de la fenêtre
     document.getElementById('donateModal').addEventListener('click', function (e) {
         if (e.target === this) closeDonateModal();
     });
 </script>
 </body>
-
 </html>
