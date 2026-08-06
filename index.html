@@ -31,6 +31,9 @@
         }
         #header {
             height: 56px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -42,6 +45,9 @@
             z-index: 200;
             gap: 5px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        #header::-webkit-scrollbar {
+            display: none;
         }
         /* Titre de l'application */
         .app-title {
@@ -68,6 +74,7 @@
             height: 24px;
             background: #e0e0e0;
             margin: 0 4px;
+            flex-shrink: 0;
         }
         /* Style des boutons */
         .h-btn {
@@ -76,6 +83,9 @@
             justify-content: center;
             width: 38px;
             height: 38px;
+            /* Sans cela, une barre chargée écrase les boutons sous leur taille
+               prévue et ils deviennent trop petits pour être visés au doigt. */
+            flex-shrink: 0;
             background: transparent;
             color: #444;
             border: 1px solid transparent;
@@ -722,8 +732,21 @@
             pointer-events: visible;
             display: none;
         }
-        #layer-handles.show-all .handle {
+        /* Zone de préhension : invisible, mais c'est elle qui reçoit le doigt.
+           Son rayon est calculé au rendu, donc pas de propriété `r` ici — une
+           règle CSS écraserait l'attribut. */
+        .handle-hit {
+            fill: transparent;
+            stroke: none;
+            cursor: crosshair;
+            pointer-events: visible;
+            display: none;
+        }
+        #layer-handles.show-all .handle,
+        #layer-handles.show-all .handle-hit {
             display: block;
+        }
+        #layer-handles.show-all .handle {
             opacity: 0.8;
         }
         .handle:hover {
@@ -790,18 +813,27 @@
             white-space: nowrap;
         }
         /* --- RESPONSIVE (tablettes / TBI) --- */
-        @media (max-width: 820px) {
-            #header {
-                overflow-x: auto;
-                scrollbar-width: none;
-            }
-            #header::-webkit-scrollbar {
-                display: none;
-            }
+        /* Le nom complet coûte une centaine de pixels dans une barre déjà
+           à l'étroit : on ne garde que la pastille dès qu'elle se remplit. */
+        @media (max-width: 1100px) {
             .app-title {
                 font-size: 15px;
                 margin-right: 6px;
+                gap: 0;
             }
+            .app-title-text {
+                display: none;
+            }
+            /* Resserre les séparateurs : quinze pixels de gagnés suffisent à
+               faire tenir toute la barre sur une tablette en paysage. */
+            .h-sep {
+                margin: 0 1px;
+            }
+            #header {
+                gap: 3px;
+            }
+        }
+        @media (max-width: 820px) {
             #sidebar {
                 width: 86px;
                 min-width: 86px;
@@ -810,8 +842,8 @@
         }
         @media (pointer: coarse) {
             .h-btn {
-                width: 42px;
-                height: 42px;
+                width: 44px;
+                height: 44px;
             }
             .btn {
                 height: 46px;
@@ -824,7 +856,7 @@
 </head>
 <body>
     <header id="header">
-        <div class="app-title">GéoMaster <span class="app-version">3D</span></div>
+        <div class="app-title"><span class="app-title-text">GéoMaster&nbsp;</span><span class="app-version">3D</span></div>
         <button class="h-btn active" id="btn-select" onclick="app.setMode('select', this)" title="Sélectionner">
             <svg viewBox="0 0 24 24">
                 <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" />
@@ -1252,7 +1284,20 @@
        il faut toujours les recopier, sinon deux objets partagent le même point et
        se déplacent ensemble. */
     const clonePt = p => ({ x: p.x, y: p.y });
+    const isCoarsePointer = () => window.matchMedia('(pointer: coarse)').matches;
+    // Le disque visible et sa zone de préhension pilotent tous deux le même sommet.
+    const isHandleEl = el => el.classList && (el.classList.contains('handle') || el.classList.contains('handle-hit'));
     class Utils {
+        /* Une poignée = un disque visible (petit, pour ne pas masquer la figure) doublé
+           d'une zone de préhension invisible. Sans elle, viser un sommet de 10 px au
+           doigt est impossible : on attrape la face et c'est tout le solide qui bouge.
+           Le rayon est divisé par le zoom pour rester constant à l'écran. */
+        static handle(g, x, y, idx, sid) {
+            const z = (typeof app !== 'undefined' && app.view) ? app.view.z : 1;
+            const grip = (isCoarsePointer() ? 22 : 9) / z;
+            g.appendChild(Utils.createEl("circle", { cx: x, cy: y, r: grip, class: "handle-hit", "data-idx": idx, "data-sid": sid }));
+            g.appendChild(Utils.createEl("circle", { cx: x, cy: y, r: 5, class: "handle", "data-idx": idx, "data-sid": sid }));
+        }
 	static drawPointShape(g, x, y, style, color) {
         if (style === 'dot') {
             g.appendChild(Utils.createEl("circle", { cx: x, cy: y, r: 4, fill: color }));
@@ -1374,7 +1419,7 @@
             else { polyProps.stroke = "none"; }
             const poly = Utils.createEl("polygon", polyProps); el.appendChild(poly); g.appendChild(el); return idx;
         }
-        renderHandles(g) { this.vertices.forEach((v, i) => g.appendChild(Utils.createEl("circle", { cx: v.x, cy: v.y, r: 5, class: "handle", "data-idx": i, "data-sid": this.id }))); }
+        renderHandles(g) { this.vertices.forEach((v, i) => Utils.handle(g, v.x, v.y, i, this.id)); }
         moveHandle(i, p) { this.vertices[i].x = p.x; this.vertices[i].y = p.y; }
         getData() { return { type: 'polyface', vertices: this.vertices, color: this.color, opacity: this.opacity, hasBorder: this.hasBorder, fillStyle: this.fillStyle }; }
     }
@@ -1396,7 +1441,7 @@
         g.appendChild(el);
         return l ? this.renderLabels(g, [this.p], idx) : idx;
     }
-    renderHandles(g) { g.appendChild(Utils.createEl("circle", { cx: this.p.x, cy: this.p.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id })); }
+    renderHandles(g) { Utils.handle(g, this.p.x, this.p.y, 0, this.id); }
     moveHandle(i, p) { this.p = clonePt(p); }
     moveLabel(i, p) { const dx = p.x - this.p.x; const dy = p.y - this.p.y; this.labels[0].ang = Math.atan2(dy, dx); this.labels[0].dist = Math.sqrt(dx * dx + dy * dy); }
     getData() { return { type: 'freepoint', p: this.p, color: this.color, labels: this.labels, pStyle: this.pStyle }; }
@@ -1427,7 +1472,7 @@
         g.appendChild(el); 
         return l ? this.renderLabels(g, [this.p1, this.p2], idx) : idx;
     }
-    renderHandles(g) { g.appendChild(Utils.createEl("circle", { cx: this.p1.x, cy: this.p1.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id })); g.appendChild(Utils.createEl("circle", { cx: this.p2.x, cy: this.p2.y, r: 5, class: "handle", "data-idx": 1, "data-sid": this.id })); }
+    renderHandles(g) { Utils.handle(g, this.p1.x, this.p1.y, 0, this.id); Utils.handle(g, this.p2.x, this.p2.y, 1, this.id); }
     moveHandle(i, p) { if (i == 0) { this.p1.x = p.x; this.p1.y = p.y; } else { this.p2.x = p.x; this.p2.y = p.y; } }
     moveLabel(i, p) { const pt = (i == 0) ? this.p1 : this.p2; const dx = p.x - pt.x; const dy = p.y - pt.y; this.labels[i].ang = Math.atan2(dy, dx); this.labels[i].dist = Math.sqrt(dx * dx + dy * dy); }
     getData() { return { type: 'segment', p1: this.p1, p2: this.p2, color: this.color, lineStyle: this.lineStyle, mark: this.mark, labels: this.labels, pStyle: this.pStyle }; }
@@ -1436,7 +1481,7 @@
         constructor(v, f, l) { super(); this.vertices = v; this.facesIndices = f; if (l) this.labels = l; this.edgeStyles = {}; this.edgeMarks = {}; }
         invert() { this.facesIndices.forEach(f => f.reverse()); }
         getSnapPoints() { return this.vertices; }
-        renderHandles(g) { this.vertices.forEach((v, i) => g.appendChild(Utils.createEl("circle", { cx: v.x, cy: v.y, r: 5, class: "handle", "data-idx": i, "data-sid": this.id }))); }
+        renderHandles(g) { this.vertices.forEach((v, i) => Utils.handle(g, v.x, v.y, i, this.id)); }
         moveHandle(i, p) { this.vertices[i].x = p.x; this.vertices[i].y = p.y; }
         moveLabel(i, p) { const v = this.vertices[i]; const dx = p.x - v.x; const dy = p.y - v.y; this.labels[i].ang = Math.atan2(dy, dx); this.labels[i].dist = Math.sqrt(dx * dx + dy * dy); }
         render(g, lbl, idx) {
@@ -1476,10 +1521,10 @@
         constructor(c, rx, ry, h, o, i) { super(); this.c = { x: c.x, y: c.y }; this.rx = rx; this.ry = ry; this.h = { x: h.x, y: h.y }; this.orient = o; this.inverted = i; }
         invert() { this.inverted = !this.inverted; }
         renderHandles(g) {
-            g.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id }));
-            g.appendChild(Utils.createEl("circle", { cx: this.c.x + this.rx, cy: this.c.y, r: 5, class: "handle", "data-idx": 1, "data-sid": this.id }));
-            g.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y + this.ry, r: 5, class: "handle", "data-idx": 2, "data-sid": this.id }));
-            g.appendChild(Utils.createEl("circle", { cx: this.c.x + this.h.x, cy: this.c.y + this.h.y, r: 5, class: "handle", "data-idx": 3, "data-sid": this.id }));
+            Utils.handle(g, this.c.x, this.c.y, 0, this.id);
+            Utils.handle(g, this.c.x + this.rx, this.c.y, 1, this.id);
+            Utils.handle(g, this.c.x, this.c.y + this.ry, 2, this.id);
+            Utils.handle(g, this.c.x + this.h.x, this.c.y + this.h.y, 3, this.id);
         }
         moveHandle(i, p) {
             i = parseInt(i);
@@ -1533,8 +1578,8 @@
         constructor(c, rx, ry, h, o, i) { super(); this.c = { x: c.x, y: c.y }; this.rx = rx; this.ry = ry; this.h = { x: h.x, y: h.y }; this.orient = o; this.inverted = i; }
         invert() { this.inverted = !this.inverted; }
         renderHandles(g) {
-            g.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id })); g.appendChild(Utils.createEl("circle", { cx: this.c.x + this.rx, cy: this.c.y, r: 5, class: "handle", "data-idx": 1, "data-sid": this.id }));
-            g.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y + this.ry, r: 5, class: "handle", "data-idx": 2, "data-sid": this.id })); g.appendChild(Utils.createEl("circle", { cx: this.c.x + this.h.x, cy: this.c.y + this.h.y, r: 5, class: "handle", "data-idx": 3, "data-sid": this.id }));
+            Utils.handle(g, this.c.x, this.c.y, 0, this.id); Utils.handle(g, this.c.x + this.rx, this.c.y, 1, this.id);
+            Utils.handle(g, this.c.x, this.c.y + this.ry, 2, this.id); Utils.handle(g, this.c.x + this.h.x, this.c.y + this.h.y, 3, this.id);
         }
         moveHandle(i, p) { i = parseInt(i); if (i === 0) this.c = clonePt(p); else if (i === 1) this.rx = Utils.dist(this.c, p); else if (i === 2) this.ry = Utils.dist(this.c, p); else if (i === 3) { this.h = { x: p.x - this.c.x, y: p.y - this.c.y }; } }
         render(group, l, idx) {
@@ -1555,7 +1600,7 @@
         }
         getData() { return { type: 'cone', c: this.c, rx: this.rx, ry: this.ry, h: this.h, orient: this.orient, inv: this.inverted, color: this.color }; }
     }
-    class Sphere extends Solid { constructor(c, r) { super(); this.c = { x: c.x, y: c.y }; this.r = r; } render(g, l, i) { const el = Utils.createEl("g", { "data-id": this.id, class: "solid-group" }); el.style.setProperty('--stroke-color', this.color); if (this.selected) el.classList.add("selected"); el.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y, r: this.r, class: "face" })); el.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y, r: this.r, class: "edge-solid" })); el.appendChild(Utils.createEl("ellipse", { cx: this.c.x, cy: this.c.y, rx: this.r, ry: this.r * 0.3, class: "edge-dashed", fill: "none" })); g.appendChild(el); return i; } renderHandles(g) { g.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y, r: 5, class: "handle", "data-idx": 0, "data-sid": this.id })); g.appendChild(Utils.createEl("circle", { cx: this.c.x + this.r, cy: this.c.y, r: 5, class: "handle", "data-idx": 1, "data-sid": this.id })); } moveHandle(i, p) { if (parseInt(i) === 0) this.c = clonePt(p); else this.r = Utils.dist(this.c, p); } getData() { return { type: 'sphere', c: this.c, r: this.r, color: this.color }; } }
+    class Sphere extends Solid { constructor(c, r) { super(); this.c = { x: c.x, y: c.y }; this.r = r; } render(g, l, i) { const el = Utils.createEl("g", { "data-id": this.id, class: "solid-group" }); el.style.setProperty('--stroke-color', this.color); if (this.selected) el.classList.add("selected"); el.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y, r: this.r, class: "face" })); el.appendChild(Utils.createEl("circle", { cx: this.c.x, cy: this.c.y, r: this.r, class: "edge-solid" })); el.appendChild(Utils.createEl("ellipse", { cx: this.c.x, cy: this.c.y, rx: this.r, ry: this.r * 0.3, class: "edge-dashed", fill: "none" })); g.appendChild(el); return i; } renderHandles(g) { Utils.handle(g, this.c.x, this.c.y, 0, this.id); Utils.handle(g, this.c.x + this.r, this.c.y, 1, this.id); } moveHandle(i, p) { if (parseInt(i) === 0) this.c = clonePt(p); else this.r = Utils.dist(this.c, p); } getData() { return { type: 'sphere', c: this.c, r: this.r, color: this.color }; } }
     class App {
         constructor() {
             this.mode = 'select'; this.step = 0; this.solids = []; this.history = []; this.future = []; this.temp = {}; this.tgt = null; this.tgtIdx = null; this.tgtEdge = null; this.drag = null;
@@ -1609,7 +1654,7 @@ this.defaultPointStyle = 'cross';
                 e.preventDefault(); this.drag = { type: 'pan', last: { x: e.clientX, y: e.clientY } }; this.viewport.classList.add('mode-pan_tool'); return;
             }
             if (this.mode === 'eraser') { this.onEraserClick(e); return; }
-            if (e.target.classList.contains('handle') && this.mode === 'select') { this.onHDown(e); return; }
+            if (isHandleEl(e.target) && this.mode === 'select') { this.onHDown(e); return; }
             if (e.target.classList.contains('vertex-label') && this.mode === 'select') { this.onLabelDown(e); return; }
             if ((e.target.classList.contains('edge-hit') || e.target.classList.contains('free-text')) && (this.mode === 'select' || this.mode === 'coding')) {
                 if (e.target.classList.contains('free-text')) this.onSolidDown(e, e.target.closest('g').getAttribute('data-id'));
@@ -1674,9 +1719,10 @@ this.defaultPointStyle = 'cross';
             this.view.y += mid.y - this.gesture.mid.y;
             this.gesture = { dist, mid };
             this.updateView();
+            this.refreshHandles();
         }
         openMenuForTarget(e, t) {
-            if (t.classList.contains('handle')) { this.openMenu(e, t.getAttribute('data-sid'), t.getAttribute('data-idx')); return; }
+            if (isHandleEl(t)) { this.openMenu(e, t.getAttribute('data-sid'), t.getAttribute('data-idx')); return; }
             if (t.classList.contains('vertex-label')) { this.openMenu(e, t.getAttribute('data-sid'), t.getAttribute('data-idx')); return; }
             if (t.classList.contains('edge-hit')) { this.openMenu(e, t.getAttribute('data-sid'), null, t.getAttribute('data-edge-key')); return; }
             const group = t.closest && t.closest('g.solid-group'); if (group) this.openMenu(e, group.getAttribute('data-id'));
@@ -1786,6 +1832,14 @@ cyclePointStyle() {
             this.view.y = sy - (sy - this.view.y) * applied;
             this.view.z = z;
             this.updateView();
+            this.refreshHandles();
+        }
+        /* Le rayon de préhension est calculé en fonction du zoom : il doit être
+           recalculé quand celui-ci change, sinon les poignées grossissent avec la vue. */
+        refreshHandles() {
+            if (this.mode !== 'select' && this.mode !== 'face_poly') return;
+            this.lHandles.innerHTML = '';
+            this.solids.forEach(s => s.renderHandles(this.lHandles));
         }
         zoomBy(factor) { const r = this.svg.getBoundingClientRect(); this.zoomAt(factor, r.width / 2, r.height / 2); }
         onWheel(e) { e.preventDefault(); const rect = this.svg.getBoundingClientRect(); this.zoomAt(Math.exp(-e.deltaY * 0.001), e.clientX - rect.left, e.clientY - rect.top); }
@@ -1801,6 +1855,7 @@ cyclePointStyle() {
             this.view.x = rect.width / 2 - (b.minX + b.w / 2) * z;
             this.view.y = rect.height / 2 - (b.minY + b.h / 2) * z;
             this.updateView();
+            this.refreshHandles();
             this.toast("Vue recentrée");
         }
         /* Boîte englobante de la figure, en coordonnées « monde ». */
@@ -2375,7 +2430,7 @@ getCleanSVGString() {
                 this.renderAll(); return;
             }
             if (this.mode === 'select' && !this.drag) {
-                if (e.target.classList.contains('handle') || e.target.classList.contains('vertex-label') || e.target.classList.contains('edge-hit')) return;
+                if (isHandleEl(e.target) || e.target.classList.contains('vertex-label') || e.target.classList.contains('edge-hit')) return;
                 const group = e.target.closest('g.solid-group');
                 if (group) { const sid = group.getAttribute('data-id'); let changed = false; this.solids.forEach(s => { if (s.id == sid) { if (!s.selected) { s.selected = true; changed = true; } } else { if (s.selected) { s.selected = false; changed = true; } } }); if (changed) this.renderAll(); } else { this.deselectAll(); }
             }
