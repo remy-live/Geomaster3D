@@ -338,6 +338,65 @@
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
+        /* --- BARRE DE CONSTRUCTION ---
+           Au doigt, il n'y a pas de survol : sans indication permanente, on ne
+           sait ni où on en est ni comment terminer une base. Elle reste donc
+           affichée pendant toute la construction. */
+        #build-bar {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            max-width: calc(100% - 24px);
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.14);
+            z-index: 60;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        #build-bar.show {
+            display: flex;
+        }
+        #build-step {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            padding: 0 6px;
+            white-space: nowrap;
+        }
+        .build-btn {
+            flex-shrink: 0;
+            min-height: 38px;
+            padding: 0 12px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            background: white;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: 0.15s;
+        }
+        .build-btn:hover {
+            background: #f2f2f5;
+        }
+        .build-btn.primary {
+            background: var(--accent);
+            border-color: transparent;
+            color: white;
+        }
+        .build-btn.primary:hover {
+            filter: brightness(1.08);
+        }
         /* INLINE INPUT FOR TEXT */
         #inline-input {
             position: fixed;
@@ -851,6 +910,10 @@
             .handle {
                 r: 7;
             }
+            .build-btn {
+                min-height: 44px;
+                padding: 0 14px;
+            }
         }
     </style>
 </head>
@@ -1117,6 +1180,12 @@
                     <circle id="snap-marker" cx="0" cy="0" r="6"></circle>
                 </g>
             </svg>
+            <div id="build-bar">
+                <span id="build-step"></span>
+                <button class="build-btn" id="build-undo" onclick="app.undoLastPoint()">↶ Dernier point</button>
+                <button class="build-btn primary" id="build-done" onclick="app.finishBase()">✓ Fermer la base</button>
+                <button class="build-btn" onclick="app.cancelShape()">Annuler</button>
+            </div>
             <div id="status-pill">Prêt.</div>
             <div id="menu-backdrop"></div>
             <input type="text" id="inline-input">
@@ -1663,7 +1732,18 @@ this.defaultPointStyle = 'cross';
             }
             const group = e.target.closest('g');
             if (this.mode === 'select' && group && group.hasAttribute('data-id')) { this.onSolidDown(e, group.getAttribute('data-id')); return; }
+            // Au doigt, rien ne bouge tant qu'on ne touche pas l'écran : placer au
+            // relâchement plutôt qu'à l'appui donne enfin un aperçu, en glissant.
+            if (e.pointerType === 'touch' && this.isCreationMode()) {
+                this.touchPlace = true;
+                this.onMove(e);
+                return;
+            }
             this.onClick(e);
+        }
+        queueBuildBar() { setTimeout(() => this.updateBuildBar(), 0); }
+        isCreationMode() {
+            return !!this.mode && !['select', 'eraser', 'pan_tool', 'coding', 'text'].includes(this.mode);
         }
         onPointerMove(e) {
             if (this.pointers.has(e.pointerId)) this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -1677,6 +1757,7 @@ this.defaultPointStyle = 'cross';
         onPointerUp(e) {
             this.pointers.delete(e.pointerId);
             this.cancelLongPress();
+            if (this.touchPlace) { this.touchPlace = false; this.onClick(e); }
             if (this.gesture && this.pointers.size < 2) this.gesture = null;
             if (this.drag && this.drag.s) { const el = document.querySelector(`.solid-group[data-id="${this.drag.s.id}"]`); if (el) el.classList.remove('is-dragging'); }
             if (this.drag) this.autoSave();
@@ -1697,6 +1778,7 @@ this.defaultPointStyle = 'cross';
         startGesture() {
             this.cancelLongPress();
             this.drag = null;
+            this.touchPlace = false;   // un second doigt annule le point en cours de pose
             const [a, b] = [...this.pointers.values()];
             this.gesture = { dist: Math.hypot(b.x - a.x, b.y - a.y), mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
         }
@@ -1762,7 +1844,67 @@ this.defaultPointStyle = 'cross';
         cancelShape() {
             this.step = 0; this.temp = {}; this.lGhost.innerHTML = '';
             this.marker.classList.remove('closing');
+            this.updateBuildBar();
             this.toast("Construction annulée");
+        }
+        /* Distance d'accrochage pour refermer une base. Elle est exprimée à
+           l'écran (donc divisée par le zoom) et élargie au doigt. */
+        closeDist() { return (isCoarsePointer() ? 26 : 15) / this.view.z; }
+        isPolyBase() { return this.mode === 'face_poly' || this.mode.includes('prism') || this.mode === 'pyramid_free'; }
+        buildHint() {
+            const m = this.mode, s = this.step, n = (this.temp.pts || []).length;
+            if (m === 'free_point') return "Placez un point";
+            if (m === 'segment') return s === 0 ? "1ᵉʳ point du segment" : "2ᵉ point du segment";
+            if (m === 'face_poly') return s === 0 ? "1ᵉʳ sommet du polygone" : `${n} sommet${n > 1 ? 's' : ''} — continuez, puis « Fermer »`;
+            if (m === 'cuboid') return ["Un coin de la base", "Largeur", "Profondeur", "Hauteur"][s] || "";
+            if (m.includes('prism') || m === 'pyramid_free') {
+                if (s === 0) return "1ᵉʳ sommet de la base";
+                if (s === 1) return `${n} sommet${n > 1 ? 's' : ''} — continuez, puis « Fermer la base »`;
+                return m === 'pyramid_free' ? "Placez le sommet" : "Définissez la hauteur";
+            }
+            if (m === 'sphere') return s === 0 ? "Centre de la sphère" : "Rayon";
+            if (m.includes('cyl') || m.includes('cone')) return ["Centre de la base", "Rayon", "Aplatissement (perspective)", "Hauteur"][s] || "";
+            return "";
+        }
+        updateBuildBar() {
+            const bar = document.getElementById('build-bar');
+            if (!bar) return;
+            if (!this.isCreationMode()) { bar.classList.remove('show'); return; }
+            document.getElementById('build-step').textContent = this.buildHint();
+            const n = (this.temp.pts || []).length;
+            const canClose = this.isPolyBase() && this.step === 1 && n >= 3;
+            document.getElementById('build-done').style.display = canClose ? 'block' : 'none';
+            document.getElementById('build-done').textContent = this.mode === 'face_poly' ? "✓ Fermer" : "✓ Fermer la base";
+            document.getElementById('build-undo').style.display = this.step > 0 ? 'block' : 'none';
+            bar.classList.add('show');
+        }
+        /* Retire le dernier point posé au lieu de tout recommencer : un appui
+           mal placé ne doit pas coûter la figure entière. */
+        undoLastPoint() {
+            if (this.isPolyBase()) {
+                if (this.step === 2) { this.step = 1; }
+                else if (this.temp.pts && this.temp.pts.length) {
+                    this.temp.pts.pop();
+                    if (!this.temp.pts.length) { this.cancelShape(); return; }
+                }
+            } else if (this.step > 0) { this.step--; }
+            else { this.cancelShape(); return; }
+            this.lGhost.innerHTML = '';
+            this.marker.classList.remove('closing');
+            this.updateBuildBar();
+        }
+        /* Referme la base au bouton. Viser à nouveau le premier sommet à quelques
+           pixels près est le geste le plus difficile au doigt. */
+        finishBase() {
+            const pts = this.temp.pts || [];
+            if (!this.isPolyBase() || pts.length < 3) return;
+            if (this.mode === 'face_poly') { this.saveState(); this.solids.push(new PolyFace(pts)); this.finish(); return; }
+            this.step = 2;
+            this.temp.startDrag = clonePt(pts[0]);
+            this.lGhost.innerHTML = '';
+            this.marker.classList.remove('closing');
+            this.updateBuildBar();
+            this.toast(this.mode === 'pyramid_free' ? "Placez le sommet" : "Définissez la hauteur");
         }
         deleteSelection() {
             const doomed = this.solids.filter(s => s.selected);
@@ -2339,7 +2481,7 @@ getCleanSVGString() {
             this.mode = m; this.step = 0; this.temp = {}; this.lGhost.innerHTML = '';
             // Les bascules Aimant / Noms restent allumées : ce ne sont pas des modes.
             document.querySelectorAll('.btn, .h-btn').forEach(x => { if (x.id !== 'btn-magnet-ui' && x.id !== 'btn-names-ui') x.classList.remove('active'); });
-            if (b) b.classList.add('active'); if (m === 'select') { this.viewport.classList.add('mode-select'); this.viewport.classList.remove('mode-eraser'); this.viewport.classList.remove('mode-pan_tool'); this.toast("Mode Édition"); this.renderAll(); return; }
+            if (b) b.classList.add('active'); this.updateBuildBar(); if (m === 'select') { this.viewport.classList.add('mode-select'); this.viewport.classList.remove('mode-eraser'); this.viewport.classList.remove('mode-pan_tool'); this.toast("Mode Édition"); this.renderAll(); return; }
             if (m === 'eraser') { this.viewport.classList.add('mode-eraser'); this.toast("Mode Gomme"); return; }
             if (m === 'pan_tool') { this.viewport.classList.add('mode-pan_tool'); this.toast("Mode Déplacement"); return; }
             this.viewport.classList.remove('mode-select'); this.viewport.classList.remove('mode-eraser'); this.viewport.classList.remove('mode-pan_tool'); this.toast("Mode Création activé"); this.renderAll();
@@ -2360,6 +2502,7 @@ getCleanSVGString() {
         renameLabel(e) { e.stopPropagation(); const sid = e.target.getAttribute('data-sid'), idx = e.target.getAttribute('data-idx'); const s = this.solids.find(x => x.id == sid); if (s && s.labels[idx]) { const p = s.vertices ? s.vertices[idx] : s.p; this.showInlineInput(p.x, p.y, s.labels[idx].t, (val) => { if (val !== null) { this.saveState(); s.labels[idx].t = val; this.renderAll(); } }); } }
         renameText(e) { e.stopPropagation(); const g = e.target.closest('g'); if (g) { const s = this.solids.find(x => x.id == g.getAttribute('data-id')); if (s instanceof FreeText) { this.showInlineInput(s.p.x, s.p.y, s.text, (val) => { if (val) { this.saveState(); s.text = val; this.renderAll(); } }); } } }
         onClick(e) {
+            this.queueBuildBar();
             if (this.mode === 'select' || this.mode === 'eraser' || this.mode === 'pan_tool' || !this.mode) return; const p = this.getMouse(e);
             if (this.mode === 'text') { this.showInlineInput(p.x, p.y, "", (val) => { if (val) { this.saveState(); this.solids.push(new FreeText(p, val)); this.finish(); } }); return; }
             if (this.mode === 'free_point') {
@@ -2404,11 +2547,11 @@ getCleanSVGString() {
 }
             else if (this.mode === 'face_poly') {
                 if (this.step === 0) { this.temp.pts = [p]; this.step = 1; this.toast("Cliquez sur le point suivant... (Re-cliquez sur le 1er pour finir)"); }
-                else { const first = this.temp.pts[0]; const dist = Math.hypot(p.x - first.x, p.y - first.y); if (this.temp.pts.length >= 3 && (p === first || dist < 15)) { this.saveState(); this.solids.push(new PolyFace(this.temp.pts)); this.finish(); } else { this.temp.pts.push(p); } }
+                else { const first = this.temp.pts[0]; const dist = Math.hypot(p.x - first.x, p.y - first.y); if (this.temp.pts.length >= 3 && (p === first || dist < this.closeDist())) { this.saveState(); this.solids.push(new PolyFace(this.temp.pts)); this.finish(); } else { this.temp.pts.push(p); } }
             }
             else if (this.mode.includes('prism') || this.mode.includes('pyramid_free')) {
                 if (this.step === 0) { this.temp.pts = [p]; this.step = 1; }
-                else if (this.step === 1) { if (this.temp.pts.length >= 3 && Math.hypot(p.x - this.temp.pts[0].x, p.y - this.temp.pts[0].y) < 15) { this.step = 2; this.temp.startDrag = p; this.toast("2. Définissez la HAUTEUR..."); } else this.temp.pts.push(p); }
+                else if (this.step === 1) { if (this.temp.pts.length >= 3 && Math.hypot(p.x - this.temp.pts[0].x, p.y - this.temp.pts[0].y) < this.closeDist()) { this.step = 2; this.temp.startDrag = p; this.toast("2. Définissez la HAUTEUR..."); } else this.temp.pts.push(p); }
                 else if (this.step === 2) { this.saveState(); const pts = this.temp.pts.map(k => ({ x: k.x, y: k.y })); let s; if (this.mode === 'pyramid_free') s = new Pyramid(pts, p); else s = new Prism(pts, { x: p.x - this.temp.startDrag.x, y: p.y - this.temp.startDrag.y }); this.solids.push(s); this.finish(); }
             } else if (this.mode === 'cuboid') {
                 if (this.step === 0) { this.temp.p1 = p; this.step = 1; this.toast("2. Largeur..."); } else if (this.step === 1) { this.temp.p2 = p; this.step = 2; this.toast("3. Profondeur..."); } else if (this.step === 2) { this.temp.p3 = p; this.step = 3; this.toast("4. Hauteur..."); }
@@ -2439,10 +2582,10 @@ getCleanSVGString() {
             if (this.mode === 'free_point') { Utils.createCross(this.lGhost, p.x, p.y, 4, "#007AFF"); }
             else if (this.mode === 'segment') { if (this.step === 1 && this.temp.p1) { this.lGhost.appendChild(Utils.createEl("line", { x1: this.temp.p1.x, y1: this.temp.p1.y, x2: p.x, y2: p.y, class: "ghost" })); Utils.createCross(this.lGhost, this.temp.p1.x, this.temp.p1.y, 4, "#007AFF"); Utils.createCross(this.lGhost, p.x, p.y, 4, "#007AFF"); } }
             else if (this.mode === 'face_poly') {
-                if (this.step === 1) { const pts = [...this.temp.pts, p]; const ptsStr = pts.map(pt => `${pt.x},${pt.y}`).join(" "); this.lGhost.appendChild(Utils.createEl("polygon", { points: ptsStr, class: "ghost-face" })); this.lGhost.appendChild(Utils.createEl("line", { x1: this.temp.pts[this.temp.pts.length - 1].x, y1: this.temp.pts[this.temp.pts.length - 1].y, x2: p.x, y2: p.y, stroke: "#007AFF", "stroke-dasharray": "4,4" })); const first = this.temp.pts[0]; if (this.temp.pts.length >= 3 && (p === first || Math.hypot(p.x - first.x, p.y - first.y) < 15)) this.marker.classList.add("closing"); else this.marker.classList.remove("closing"); }
+                if (this.step === 1) { const pts = [...this.temp.pts, p]; const ptsStr = pts.map(pt => `${pt.x},${pt.y}`).join(" "); this.lGhost.appendChild(Utils.createEl("polygon", { points: ptsStr, class: "ghost-face" })); this.lGhost.appendChild(Utils.createEl("line", { x1: this.temp.pts[this.temp.pts.length - 1].x, y1: this.temp.pts[this.temp.pts.length - 1].y, x2: p.x, y2: p.y, stroke: "#007AFF", "stroke-dasharray": "4,4" })); const first = this.temp.pts[0]; if (this.temp.pts.length >= 3 && (p === first || Math.hypot(p.x - first.x, p.y - first.y) < this.closeDist())) this.marker.classList.add("closing"); else this.marker.classList.remove("closing"); }
             }
             else if (this.mode.includes('prism') || this.mode.includes('pyramid_free')) {
-                if (this.step === 1) { if (this.temp.pts.length >= 3 && Math.hypot(p.x - this.temp.pts[0].x, p.y - this.temp.pts[0].y) < 15) this.marker.classList.add("closing"); else this.marker.classList.remove("closing"); const pts = [...this.temp.pts, p]; if (pts.length >= 3) this.lGhost.appendChild(Utils.createEl("polygon", { points: pts.map(pt => `${pt.x},${pt.y}`).join(" "), class: "face-ghost" })); for (let i = 0; i < pts.length - 1; i++)this.lGhost.appendChild(Utils.createEl("line", { x1: pts[i].x, y1: pts[i].y, x2: pts[i + 1].x, y2: pts[i + 1].y })); this.temp.pts.forEach(pt => this.lGhost.appendChild(Utils.createEl("rect", { x: pt.x - 3, y: pt.y - 3, width: 6, height: 6, class: "ghost-pt" }))); }
+                if (this.step === 1) { if (this.temp.pts.length >= 3 && Math.hypot(p.x - this.temp.pts[0].x, p.y - this.temp.pts[0].y) < this.closeDist()) this.marker.classList.add("closing"); else this.marker.classList.remove("closing"); const pts = [...this.temp.pts, p]; if (pts.length >= 3) this.lGhost.appendChild(Utils.createEl("polygon", { points: pts.map(pt => `${pt.x},${pt.y}`).join(" "), class: "face-ghost" })); for (let i = 0; i < pts.length - 1; i++)this.lGhost.appendChild(Utils.createEl("line", { x1: pts[i].x, y1: pts[i].y, x2: pts[i + 1].x, y2: pts[i + 1].y })); this.temp.pts.forEach(pt => this.lGhost.appendChild(Utils.createEl("rect", { x: pt.x - 3, y: pt.y - 3, width: 6, height: 6, class: "ghost-pt" }))); }
                 else if (this.step === 2) { let g; const pts = this.temp.pts.map(k => ({ x: k.x, y: k.y })); if (this.mode === 'pyramid_free') g = new Pyramid(pts, p); else g = new Prism(pts, { x: p.x - this.temp.startDrag.x, y: p.y - this.temp.startDrag.y }); this.renderGhost(g); }
             }
             else if (this.mode === 'cuboid') {
@@ -2457,7 +2600,7 @@ getCleanSVGString() {
             }
         }
         renderGhost(s) { s.selected = true; s.render(this.lGhost, false, 0); }
-        finish() { this.step = 0; this.temp = {}; this.lGhost.innerHTML = ''; this.renderAll(); this.autoSave(); this.toast("Forme créée"); }
+        finish() { this.step = 0; this.temp = {}; this.lGhost.innerHTML = ''; this.renderAll(); this.autoSave(); this.updateBuildBar(); this.toast("Forme créée"); }
         clear() {
             if (this.solids.length && !confirm("Effacer toute la figure ? (annulable avec Ctrl+Z)")) return;
             this.saveState(); this.solids = []; this.renderAll(); this.autoSave(); this.toast("Figure effacée");
