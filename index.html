@@ -827,6 +827,19 @@
             stroke: #dcdcdc;
             stroke-width: 1;
         }
+        /* --- LOUPE DE VISÉE --- */
+        #loupe {
+            pointer-events: none;
+        }
+        #loupe-bg {
+            fill: white;
+        }
+        #loupe-ring {
+            fill: none;
+            stroke: rgba(0, 0, 0, 0.22);
+            stroke-width: 3;
+            filter: drop-shadow(0 5px 14px rgba(0, 0, 0, 0.28));
+        }
         /* --- MODALES (aide / don) --- */
         .modal-backdrop {
             display: none;
@@ -1178,6 +1191,9 @@
                         patternTransform="rotate(45)">
                         <path d="M0 0v10M0 5h10" stroke="#007AFF" stroke-width="1" opacity="0.5" />
                     </pattern>
+                    <clipPath id="loupe-clip">
+                        <circle id="loupe-clip-circle" cx="0" cy="0" r="58" />
+                    </clipPath>
                 </defs>
                 <g id="world">
                     <rect id="bg-rect" x="-50000" y="-50000" width="100000" height="100000" fill="url(#pat-dots)" />
@@ -1185,6 +1201,16 @@
                     <g id="layer-handles"></g>
                     <g id="layer-ghost" class="ghost"></g>
                     <circle id="snap-marker" cx="0" cy="0" r="6"></circle>
+                </g>
+                <!-- Loupe de visée : `use` reflète le monde en direct, donc la
+                     figure, l'aperçu et le marqueur d'aimantation y apparaissent
+                     agrandis sans être redessinés. -->
+                <g id="loupe" style="display:none">
+                    <circle id="loupe-bg" cx="0" cy="0" r="58"></circle>
+                    <g clip-path="url(#loupe-clip)">
+                        <use id="loupe-content" href="#world"></use>
+                    </g>
+                    <circle id="loupe-ring" cx="0" cy="0" r="58"></circle>
                 </g>
             </svg>
             <div id="build-bar">
@@ -1377,9 +1403,9 @@
         /* Réticule de visée : il montre où le point va tomber pendant qu'on glisse.
            Au doigt, ses branches sont écartées d'un vide central pour rester
            visibles tout autour de la pulpe, qui masque la cible. */
-        static drawCursor(g, x, y) {
+        static drawCursor(g, x, y, compact) {
             const z = (typeof app !== 'undefined' && app.view) ? app.view.z : 1;
-            const coarse = isCoarsePointer();
+            const coarse = isCoarsePointer() && !compact;
             const inner = (coarse ? 15 : 0) / z;
             const outer = (coarse ? 40 : 11) / z;
             const base = { class: "ghost-cursor", stroke: "#007AFF", fill: "none", "stroke-linecap": "round", "pointer-events": "none" };
@@ -1703,6 +1729,12 @@ this.defaultPointStyle = 'cross';
             this.container = document.getElementById('main-container');
             this.scene = document.getElementById('world');
             this.inlineInput = document.getElementById('inline-input');
+            this.loupe = document.getElementById('loupe');
+            this.loupeContent = document.getElementById('loupe-content');
+            this.loupeClip = document.getElementById('loupe-clip-circle');
+            this.loupeRing = document.getElementById('loupe-ring');
+            this.loupeBg = document.getElementById('loupe-bg');
+            this.loupeOn = false;
             this.armed = null;          // instantané d'historique en attente (voir armState)
             this.spaceDown = false;     // Espace maintenu => déplacement temporaire de la vue
             this.pointers = new Map();  // pointeurs actifs (pour le pincer-zoomer)
@@ -1780,7 +1812,8 @@ this.defaultPointStyle = 'cross';
             this.cancelLongPress();
             // Le doigt est parti : plus rien à prévisualiser, sinon un aperçu
             // figé reste affiché jusqu'au contact suivant.
-            if (this.touchPlace) { this.touchPlace = false; this.onClick(e); this.lGhost.innerHTML = ''; }
+            if (this.touchPlace) { this.touchPlace = false; this.onClick(e); this.renderScaffold(); }
+            this.hideLoupe();
             if (this.gesture && this.pointers.size < 2) this.gesture = null;
             if (this.drag && this.drag.s) { const el = document.querySelector(`.solid-group[data-id="${this.drag.s.id}"]`); if (el) el.classList.remove('is-dragging'); }
             if (this.drag) this.autoSave();
@@ -1863,10 +1896,31 @@ this.defaultPointStyle = 'cross';
             }
             if (e.key === "Delete" || e.key === "Backspace") { this.deleteSelection(); }
         }
+        /* Le doigt masque le point qu'il pose. On affiche au-dessus de lui un
+           disque montrant la zone agrandie, comme la loupe de sélection de
+           texte des mobiles. La correspondance : un point du monde `w` doit
+           tomber au centre `l` du disque, à l'échelle `z * M`. */
+        showLoupe(world, clientX, clientY) {
+            const rect = this.svg.getBoundingClientRect();
+            const R = 58, M = 2.4, OFFSET = 96;
+            const sx = clientX - rect.left, sy = clientY - rect.top;
+            const lx = Math.max(R + 6, Math.min(rect.width - R - 6, sx));
+            // Au-dessus du doigt, sauf trop près du bord haut : on bascule dessous.
+            let ly = sy - OFFSET;
+            if (ly - R < 6) ly = sy + OFFSET;
+            ly = Math.max(R + 6, Math.min(rect.height - R - 6, ly));
+            const tx = lx - M * (this.view.x + world.x * this.view.z);
+            const ty = ly - M * (this.view.y + world.y * this.view.z);
+            this.loupeContent.setAttribute('transform', `translate(${tx},${ty}) scale(${M})`);
+            [this.loupeClip, this.loupeRing, this.loupeBg].forEach(el => { el.setAttribute('cx', lx); el.setAttribute('cy', ly); });
+            if (!this.loupeOn) { this.loupe.style.display = ''; this.loupeOn = true; }
+        }
+        hideLoupe() { if (this.loupeOn) { this.loupe.style.display = 'none'; this.loupeOn = false; } }
         /* Abandonne la figure en cours de construction sans toucher aux objets existants. */
         cancelShape() {
             this.step = 0; this.temp = {}; this.lGhost.innerHTML = '';
             this.marker.classList.remove('closing');
+            this.hideLoupe();
             this.updateBuildBar();
             this.toast("Construction annulée");
         }
@@ -1912,8 +1966,8 @@ this.defaultPointStyle = 'cross';
                 }
             } else if (this.step > 0) { this.step--; }
             else { this.cancelShape(); return; }
-            this.lGhost.innerHTML = '';
             this.marker.classList.remove('closing');
+            this.renderScaffold();
             this.updateBuildBar();
         }
         /* Referme la base au bouton. Viser à nouveau le premier sommet à quelques
@@ -1924,8 +1978,8 @@ this.defaultPointStyle = 'cross';
             if (this.mode === 'face_poly') { this.saveState(); this.solids.push(new PolyFace(pts)); this.finish(); return; }
             this.step = 2;
             this.temp.startDrag = clonePt(pts[0]);
-            this.lGhost.innerHTML = '';
             this.marker.classList.remove('closing');
+            this.renderScaffold();
             this.updateBuildBar();
             this.toast(this.mode === 'pyramid_free' ? "Placez le sommet" : "Définissez la hauteur");
         }
@@ -2501,7 +2555,7 @@ getCleanSVGString() {
             this.marker.classList.remove("visible"); this.marker.classList.remove("snapped-point"); return { x: wx, y: wy };
         }
         setMode(m, b) {
-            this.mode = m; this.step = 0; this.temp = {}; this.lGhost.innerHTML = '';
+            this.mode = m; this.step = 0; this.temp = {}; this.lGhost.innerHTML = ''; this.hideLoupe();
             // Les bascules Aimant / Noms restent allumées : ce ne sont pas des modes.
             document.querySelectorAll('.btn, .h-btn').forEach(x => { if (x.id !== 'btn-magnet-ui' && x.id !== 'btn-names-ui') x.classList.remove('active'); });
             if (b) b.classList.add('active'); this.updateBuildBar(); if (m === 'select') { this.viewport.classList.add('mode-select'); this.viewport.classList.remove('mode-eraser'); this.viewport.classList.remove('mode-pan_tool'); this.toast("Mode Édition"); this.renderAll(); return; }
@@ -2589,6 +2643,10 @@ getCleanSVGString() {
         onMove(e) {
             if (this.drag && this.drag.type === 'pan') { const dx = e.clientX - this.drag.last.x; const dy = e.clientY - this.drag.last.y; this.view.x += dx; this.view.y += dy; this.drag.last = { x: e.clientX, y: e.clientY }; this.updateView(); return; }
             const p = this.getMouse(e);
+            // Uniquement pendant une pose de point ou le réglage d'un sommet :
+            // ce sont les gestes de précision, là où l'occultation gêne.
+            if (isCoarsePointer() && e.clientX !== undefined && (this.touchPlace || (this.drag && this.drag.type === 'handle'))) this.showLoupe(p, e.clientX, e.clientY);
+            else this.hideLoupe();
             if (this.drag) {
                 if (!this.drag.s) return;
                 this.commitArmed();
@@ -2606,7 +2664,7 @@ getCleanSVGString() {
             // seule compte la position visée. C'est aussi le cas permanent du
             // « Point libre », qui ne quitte jamais l'étape 0.
             if (this.step === 0 || this.mode === 'text' || this.mode === 'free_point') {
-                Utils.drawCursor(this.lGhost, p.x, p.y);
+                Utils.drawCursor(this.lGhost, p.x, p.y, this.loupeOn);
                 return;
             }
             if (this.mode === 'segment') { if (this.step === 1 && this.temp.p1) { this.lGhost.appendChild(Utils.createEl("line", { x1: this.temp.p1.x, y1: this.temp.p1.y, x2: p.x, y2: p.y, class: "ghost" })); Utils.createCross(this.lGhost, this.temp.p1.x, this.temp.p1.y, 4, "#007AFF"); Utils.createCross(this.lGhost, p.x, p.y, 4, "#007AFF"); } }
@@ -2629,9 +2687,35 @@ getCleanSVGString() {
             }
             // Le doigt masque le point qu'il est en train de poser : le réticule
             // reste affiché par-dessus la forme pour montrer la cible exacte.
-            if (isCoarsePointer()) Utils.drawCursor(this.lGhost, p.x, p.y);
+            if (isCoarsePointer()) Utils.drawCursor(this.lGhost, p.x, p.y, this.loupeOn);
         }
         renderGhost(s) { s.selected = true; s.render(this.lGhost, false, 0); }
+        /* Ce qui est déjà posé ne vivait que dans l'aperçu, redessiné à chaque
+           mouvement du curseur. Au doigt il n'y a pas de survol : dès que le
+           doigt se levait, la figure en construction disparaissait. On la
+           redessine donc explicitement après chaque point validé. */
+        renderScaffold() {
+            this.lGhost.innerHTML = '';
+            if (!this.isCreationMode() || this.step === 0) return;
+            const g = this.lGhost;
+            const mark = q => g.appendChild(Utils.createEl("rect", { x: q.x - 3, y: q.y - 3, width: 6, height: 6, class: "ghost-pt" }));
+            const link = (a, b) => g.appendChild(Utils.createEl("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y }));
+            const pts = this.temp.pts;
+            if (pts && pts.length) {
+                if (pts.length >= 3) g.appendChild(Utils.createEl("polygon", { points: pts.map(q => `${q.x},${q.y}`).join(" "), class: "face-ghost" }));
+                for (let i = 0; i < pts.length - 1; i++) link(pts[i], pts[i + 1]);
+                if (this.step === 2) link(pts[pts.length - 1], pts[0]);   // base refermée
+                pts.forEach(mark);
+                return;
+            }
+            [this.temp.p1, this.temp.p2, this.temp.p3].forEach(q => { if (q) mark(q); });
+            if (this.temp.p1 && this.temp.p2) link(this.temp.p1, this.temp.p2);
+            if (this.temp.p2 && this.temp.p3) link(this.temp.p2, this.temp.p3);
+            if (this.temp.c) {
+                mark(this.temp.c);
+                if (this.temp.r) g.appendChild(Utils.createEl("ellipse", { cx: this.temp.c.x, cy: this.temp.c.y, rx: this.temp.r, ry: this.temp.ry || this.temp.r, class: "face-ghost" }));
+            }
+        }
         finish() { this.step = 0; this.temp = {}; this.lGhost.innerHTML = ''; this.renderAll(); this.autoSave(); this.updateBuildBar(); this.toast("Forme créée"); }
         clear() {
             if (this.solids.length && !confirm("Effacer toute la figure ? (annulable avec Ctrl+Z)")) return;
