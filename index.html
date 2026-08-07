@@ -753,6 +753,13 @@
             stroke: none !important;
             opacity: 0.2 !important;
         }
+        /* Le réticule échappe au pointillé translucide appliqué à tout le calque
+           fantôme : c'est un instrument de visée, il doit rester net. */
+        .ghost .ghost-cursor {
+            stroke-dasharray: none !important;
+            stroke-width: 2px !important;
+            opacity: 1 !important;
+        }
         .ghost-pt {
             fill: var(--accent) !important;
             stroke: none !important;
@@ -1367,6 +1374,20 @@
             g.appendChild(Utils.createEl("circle", { cx: x, cy: y, r: grip, class: "handle-hit", "data-idx": idx, "data-sid": sid }));
             g.appendChild(Utils.createEl("circle", { cx: x, cy: y, r: 5, class: "handle", "data-idx": idx, "data-sid": sid }));
         }
+        /* Réticule de visée : il montre où le point va tomber pendant qu'on glisse.
+           Au doigt, ses branches sont écartées d'un vide central pour rester
+           visibles tout autour de la pulpe, qui masque la cible. */
+        static drawCursor(g, x, y) {
+            const z = (typeof app !== 'undefined' && app.view) ? app.view.z : 1;
+            const coarse = isCoarsePointer();
+            const inner = (coarse ? 15 : 0) / z;
+            const outer = (coarse ? 40 : 11) / z;
+            const base = { class: "ghost-cursor", stroke: "#007AFF", fill: "none", "stroke-linecap": "round", "pointer-events": "none" };
+            [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => {
+                g.appendChild(Utils.createEl("line", { ...base, x1: x + dx * inner, y1: y + dy * inner, x2: x + dx * outer, y2: y + dy * outer }));
+            });
+            g.appendChild(Utils.createEl("circle", { ...base, cx: x, cy: y, r: (coarse ? 4 : 2.5) / z }));
+        }
 	static drawPointShape(g, x, y, style, color) {
         if (style === 'dot') {
             g.appendChild(Utils.createEl("circle", { cx: x, cy: y, r: 4, fill: color }));
@@ -1757,7 +1778,9 @@ this.defaultPointStyle = 'cross';
         onPointerUp(e) {
             this.pointers.delete(e.pointerId);
             this.cancelLongPress();
-            if (this.touchPlace) { this.touchPlace = false; this.onClick(e); }
+            // Le doigt est parti : plus rien à prévisualiser, sinon un aperçu
+            // figé reste affiché jusqu'au contact suivant.
+            if (this.touchPlace) { this.touchPlace = false; this.onClick(e); this.lGhost.innerHTML = ''; }
             if (this.gesture && this.pointers.size < 2) this.gesture = null;
             if (this.drag && this.drag.s) { const el = document.querySelector(`.solid-group[data-id="${this.drag.s.id}"]`); if (el) el.classList.remove('is-dragging'); }
             if (this.drag) this.autoSave();
@@ -2577,10 +2600,16 @@ getCleanSVGString() {
                 const group = e.target.closest('g.solid-group');
                 if (group) { const sid = group.getAttribute('data-id'); let changed = false; this.solids.forEach(s => { if (s.id == sid) { if (!s.selected) { s.selected = true; changed = true; } } else { if (s.selected) { s.selected = false; changed = true; } } }); if (changed) this.renderAll(); } else { this.deselectAll(); }
             }
-            if (!this.mode || this.step === 0 || this.mode === 'select' || this.mode === 'eraser' || this.mode === 'text' || this.mode === 'pan_tool') return;
+            if (!this.mode || this.mode === 'select' || this.mode === 'eraser' || this.mode === 'pan_tool') return;
             this.lGhost.innerHTML = '';
-            if (this.mode === 'free_point') { Utils.createCross(this.lGhost, p.x, p.y, 4, "#007AFF"); }
-            else if (this.mode === 'segment') { if (this.step === 1 && this.temp.p1) { this.lGhost.appendChild(Utils.createEl("line", { x1: this.temp.p1.x, y1: this.temp.p1.y, x2: p.x, y2: p.y, class: "ghost" })); Utils.createCross(this.lGhost, this.temp.p1.x, this.temp.p1.y, 4, "#007AFF"); Utils.createCross(this.lGhost, p.x, p.y, 4, "#007AFF"); } }
+            // Avant le premier point il n'y a pas encore de forme à prévisualiser :
+            // seule compte la position visée. C'est aussi le cas permanent du
+            // « Point libre », qui ne quitte jamais l'étape 0.
+            if (this.step === 0 || this.mode === 'text' || this.mode === 'free_point') {
+                Utils.drawCursor(this.lGhost, p.x, p.y);
+                return;
+            }
+            if (this.mode === 'segment') { if (this.step === 1 && this.temp.p1) { this.lGhost.appendChild(Utils.createEl("line", { x1: this.temp.p1.x, y1: this.temp.p1.y, x2: p.x, y2: p.y, class: "ghost" })); Utils.createCross(this.lGhost, this.temp.p1.x, this.temp.p1.y, 4, "#007AFF"); Utils.createCross(this.lGhost, p.x, p.y, 4, "#007AFF"); } }
             else if (this.mode === 'face_poly') {
                 if (this.step === 1) { const pts = [...this.temp.pts, p]; const ptsStr = pts.map(pt => `${pt.x},${pt.y}`).join(" "); this.lGhost.appendChild(Utils.createEl("polygon", { points: ptsStr, class: "ghost-face" })); this.lGhost.appendChild(Utils.createEl("line", { x1: this.temp.pts[this.temp.pts.length - 1].x, y1: this.temp.pts[this.temp.pts.length - 1].y, x2: p.x, y2: p.y, stroke: "#007AFF", "stroke-dasharray": "4,4" })); const first = this.temp.pts[0]; if (this.temp.pts.length >= 3 && (p === first || Math.hypot(p.x - first.x, p.y - first.y) < this.closeDist())) this.marker.classList.add("closing"); else this.marker.classList.remove("closing"); }
             }
@@ -2598,6 +2627,9 @@ getCleanSVGString() {
                 else if (this.step === 2) { let ry = Math.abs(p.y - this.temp.c.y); this.lGhost.appendChild(Utils.createEl("ellipse", { cx: this.temp.c.x, cy: this.temp.c.y, rx: r, ry: ry, class: "face-ghost" })); this.lGhost.appendChild(Utils.createEl("ellipse", { cx: this.temp.c.x, cy: this.temp.c.y, rx: r, ry: ry })); }
                 else if (this.step === 3) { const h = { x: p.x - this.temp.c.x, y: p.y - this.temp.c.y }; const o = this.mode.includes('bot') ? 'bot' : 'front'; const c = { x: this.temp.c.x, y: this.temp.c.y }; let g; if (this.mode.includes('cyl')) g = new Cylinder(c, r, this.temp.ry, h, o); else g = new Cone(c, r, this.temp.ry, h, o); this.renderGhost(g); }
             }
+            // Le doigt masque le point qu'il est en train de poser : le réticule
+            // reste affiché par-dessus la forme pour montrer la cible exacte.
+            if (isCoarsePointer()) Utils.drawCursor(this.lGhost, p.x, p.y);
         }
         renderGhost(s) { s.selected = true; s.render(this.lGhost, false, 0); }
         finish() { this.step = 0; this.temp = {}; this.lGhost.innerHTML = ''; this.renderAll(); this.autoSave(); this.updateBuildBar(); this.toast("Forme créée"); }
