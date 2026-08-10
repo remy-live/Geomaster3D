@@ -28,7 +28,7 @@ l'orientation des faces.
   A', B'…) sans jamais réutiliser un nom déjà pris. Elles se déplacent à la souris et
   se renomment par double-clic.
 - **Codage des longueurs** : marques simples, doubles, triples, croix et cercles sur
-  n'importe quelle arête (outil « Codage rapide », ou clic droit sur l'arête).
+  n'importe quelle arête (outil « Codage des longueurs », ou clic droit sur l'arête).
 - **Codage automatique** : détecte les arêtes de même longueur dans toute la figure et
   leur attribue un codage cohérent.
 - **Styles** : couleur, trait plein ou pointillé arête par arête, remplissage uni ou
@@ -47,6 +47,7 @@ l'orientation des faces.
 | Format | Usage |
 |---|---|
 | **SVG** | vectoriel, recadré sur la figure, réimportable dans Inkscape ou LibreOffice |
+| **PDF** | vectoriel, une page recadrée sur la figure, libellés en vrai texte sélectionnable |
 | **PNG** | rendu ×3 sur fond blanc, net à l'impression et au vidéoprojecteur |
 | **Presse-papier** | l'image directement collable dans un traitement de texte |
 | **TikZ** | document LaTeX complet, prêt à compiler |
@@ -54,6 +55,11 @@ l'orientation des faces.
 
 Les exports reprennent les couleurs de la figure et ignorent la surbrillance de
 sélection, la grille et les poignées d'édition.
+
+Le PDF est écrit directement par l'application, sans bibliothèque : traits, courbes
+de Bézier et hachures sont de vrais objets vectoriels, et le texte utilise une police
+standard non embarquée. Seuls les caractères absents de l'encodage WinAnsi sont
+remplacés par un point d'interrogation.
 
 ## Raccourcis clavier
 

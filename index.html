@@ -999,7 +999,15 @@
                 <text x="8" y="16" class="svg-text">PNG</text>
             </svg>
         </button>
-<button class="h-btn" onclick="app.exportTikZ()" title="Export TikZ (LaTeX)">
+<button class="h-btn" onclick="app.exportPDF()" title="Export PDF (vectoriel)">
+            <svg viewBox="0 0 24 24">
+                <path d="M6 3v10" stroke-width="1.5" />
+                <path d="M3 10l3 3 3-3" stroke-width="1.5" />
+                <path d="M2 16h8" stroke-width="1.5" />
+                <text x="8" y="16" class="svg-text">PDF</text>
+            </svg>
+        </button>
+        <button class="h-btn" onclick="app.exportTikZ()" title="Export TikZ (LaTeX)">
             <svg viewBox="0 0 24 24">
                 <path d="M6 3v10" stroke-width="1.5" />
                 <path d="M3 10l3 3 3-3" stroke-width="1.5" />
@@ -1108,10 +1116,12 @@
                         <path d="M4 7V4h16v3M9 20h6M12 4v16" stroke="currentColor" />
                     </svg>
                 </button>
-                <button class="btn" title="Codage Rapide (Clic sur arête)" onclick="app.setMode('coding', this)">
+                <button class="btn" title="Codage des longueurs (touchez une arête)"
+                    onclick="app.setMode('coding', this)">
                     <svg viewBox="0 0 24 24">
-                        <line x1="12" y1="5" x2="12" y2="19" stroke-width="2" />
-                        <line x1="5" y1="12" x2="19" y2="12" stroke-width="2" />
+                        <line x1="3" y1="12" x2="21" y2="12" stroke-width="1.5" />
+                        <line x1="10" y1="7" x2="10" y2="17" stroke-width="2" />
+                        <line x1="14" y1="7" x2="14" y2="17" stroke-width="2" />
                     </svg>
                 </button>
                 <button class="btn" title="Gomme (Effacer)" onclick="app.setMode('eraser', this)">
@@ -2213,7 +2223,7 @@ getCleanSVGString() {
         }
         const world = clone.getElementById('world');
         if (world) world.removeAttribute('transform');
-        ['layer-handles', 'layer-ghost', 'snap-marker', 'bg-rect'].forEach(id => {
+        ['layer-handles', 'layer-ghost', 'snap-marker', 'bg-rect', 'loupe', 'loupe-clip'].forEach(id => {
             const el = clone.getElementById(id); if (el) el.remove();
         });
         this.svg.querySelectorAll('.edge-hit, .face, .face-base').forEach(src => {
@@ -2382,6 +2392,136 @@ getCleanSVGString() {
             const { svg } = this.getCleanSVGString();
             this.download(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }), "figure_geomaster.svg");
             this.toast("SVG exporté !");
+        }
+        exportPDF() { this.withoutSelection(() => this.buildAndDownloadPDF()); }
+        /* Écrit un PDF vectoriel à la main. Le projet n'a aucune dépendance et un
+           PDF est un format texte : les opérateurs de tracé suffisent, et le
+           résultat reste net à n'importe quel agrandissement, contrairement au PNG. */
+        buildAndDownloadPDF() {
+            const b = this.getContentBounds();
+            const pad = 50;
+            const box = b ? { x: b.minX - pad, y: b.minY - pad, w: b.w + pad * 2, h: b.h + pad * 2 }
+                          : { x: 0, y: 0, w: 800, h: 600 };
+            const S = 0.75;                                  // 96 dpi écran -> 72 dpi (point PDF)
+            const n = v => (Math.round(v * 100) / 100).toString();
+            const rgb = str => { const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(str || ''); return m ? `${n(m[1] / 255)} ${n(m[2] / 255)} ${n(m[3] / 255)}` : null; };
+            // WinAnsi n'est pas de l'ISO-8859-1 : la plage 0x80-0x9F y loge la
+            // ponctuation typographique courante en français.
+            const WINANSI = { '€': 0x80, '‚': 0x82, 'ƒ': 0x83, '„': 0x84, '…': 0x85, '†': 0x86, '‡': 0x87, 'ˆ': 0x88, '‰': 0x89, 'Š': 0x8a, '‹': 0x8b, 'Œ': 0x8c, 'Ž': 0x8e, '‘': 0x91, '’': 0x92, '“': 0x93, '”': 0x94, '•': 0x95, '–': 0x96, '—': 0x97, '˜': 0x98, '™': 0x99, 'š': 0x9a, '›': 0x9b, 'œ': 0x9c, 'ž': 0x9e, 'Ÿ': 0x9f };
+            const esc = t => t.replace(/[\\()]/g, c => '\\' + c)
+                              .replace(/[^\x20-\x7e]/g, c => {
+                                  const k = WINANSI[c] !== undefined ? WINANSI[c] : c.charCodeAt(0);
+                                  return k < 256 ? '\\' + k.toString(8).padStart(3, '0') : '?';
+                              });
+            const alphas = new Map();                        // transparences -> ExtGState
+            const gs = a => { const k = n(a); if (!alphas.has(k)) alphas.set(k, `GS${alphas.size + 1}`); return alphas.get(k); };
+            const ops = [];
+            // Le repère PDF a son origine en bas à gauche, y vers le haut. On le
+            // renverse une fois pour toutes afin d'écrire ensuite les coordonnées
+            // du dessin telles quelles.
+            ops.push(`${n(S)} 0 0 ${n(-S)} ${n(-box.x * S)} ${n((box.y + box.h) * S)} cm`, '1 J 1 j');
+            // Un cercle ou une ellipse s'approche par quatre courbes de Bézier.
+            const oval = (cx, cy, rx, ry) => {
+                const k = 0.5522847498, ox = rx * k, oy = ry * k;
+                return `${n(cx + rx)} ${n(cy)} m `
+                    + `${n(cx + rx)} ${n(cy + oy)} ${n(cx + ox)} ${n(cy + ry)} ${n(cx)} ${n(cy + ry)} c `
+                    + `${n(cx - ox)} ${n(cy + ry)} ${n(cx - rx)} ${n(cy + oy)} ${n(cx - rx)} ${n(cy)} c `
+                    + `${n(cx - rx)} ${n(cy - oy)} ${n(cx - ox)} ${n(cy - ry)} ${n(cx)} ${n(cy - ry)} c `
+                    + `${n(cx + ox)} ${n(cy - ry)} ${n(cx + rx)} ${n(cy - oy)} ${n(cx + rx)} ${n(cy)} c h`;
+            };
+            const polyPath = pts => pts.map((p, i) => `${n(p.x)} ${n(p.y)} ${i ? 'l' : 'm'}`).join(' ');
+            // Hachures : on découpe selon la face puis on trace de vraies lignes,
+            // plutôt que d'embarquer un motif de remplissage PDF.
+            const hatch = (pts, cross, col) => {
+                const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+                const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+                // Pas mesuré perpendiculairement aux traits, à 45 degrés.
+                const span = (x1 - x0) + (y1 - y0), step = 14;
+                ops.push('q', polyPath(pts) + ' h W n', `/${gs(0.5)} gs`, `${col} RG 1 w`);
+                for (let d = -span; d <= span; d += step) {
+                    ops.push(`${n(x0 + d)} ${n(y0)} m ${n(x0 + d + (y1 - y0))} ${n(y1)} l S`);
+                    if (cross) ops.push(`${n(x0 + d)} ${n(y1)} m ${n(x0 + d + (y1 - y0))} ${n(y0)} l S`);
+                }
+                ops.push('Q');
+            };
+            this.lSolids.querySelectorAll('line, polygon, circle, ellipse, path, text').forEach(el => {
+                if (el.classList.contains('edge-hit') || el.classList.contains('face') || el.classList.contains('face-base')) return;
+                const cs = window.getComputedStyle(el);
+                const strokeCol = cs.stroke && cs.stroke !== 'none' ? rgb(cs.stroke) : null;
+                const rawFill = el.getAttribute('fill') || cs.fill;
+                const isPattern = typeof rawFill === 'string' && rawFill.includes('url(');
+                const fillCol = !isPattern && cs.fill && cs.fill !== 'none' ? rgb(cs.fill) : null;
+                const sw = parseFloat(cs.strokeWidth) || 1;
+                const alpha = parseFloat(cs.fillOpacity);
+                const dash = cs.strokeDasharray && cs.strokeDasharray !== 'none'
+                    ? '[' + cs.strokeDasharray.split(/[\s,]+/).filter(Boolean).map(v => n(parseFloat(v))).join(' ') + '] 0 d' : '[] 0 d';
+
+                if (el.tagName === 'text') {
+                    if (!fillCol) return;
+                    const size = parseFloat(cs.fontSize) || 16;
+                    const txt = el.textContent || '';
+                    if (!txt.trim()) return;
+                    let x = parseFloat(el.getAttribute('x')), y = parseFloat(el.getAttribute('y'));
+                    const anchor = el.getAttribute('text-anchor') || cs.textAnchor;
+                    let w = 0;
+                    try { w = el.getComputedTextLength(); } catch (err) { w = size * 0.6 * txt.length; }
+                    if (anchor === 'middle') x -= w / 2; else if (anchor === 'end') x -= w;
+                    // `dominant-baseline: middle` place le milieu de l'œil sur y ;
+                    // le PDF part de la ligne de base, d'où le décalage.
+                    if ((el.getAttribute('dominant-baseline') || cs.dominantBaseline) === 'middle') y += size * 0.35;
+                    ops.push(`q ${fillCol} rg BT /F1 ${n(size)} Tf 1 0 0 -1 ${n(x)} ${n(y)} Tm (${esc(txt)}) Tj ET Q`);
+                    return;
+                }
+                let path = null, pts = null;
+                if (el.tagName === 'line') {
+                    path = `${n(parseFloat(el.getAttribute('x1')))} ${n(parseFloat(el.getAttribute('y1')))} m ${n(parseFloat(el.getAttribute('x2')))} ${n(parseFloat(el.getAttribute('y2')))} l`;
+                } else if (el.tagName === 'polygon') {
+                    pts = (el.getAttribute('points') || '').trim().split(/\s+/).map(q => { const [a, c] = q.split(','); return { x: parseFloat(a), y: parseFloat(c) }; }).filter(q => isFinite(q.x) && isFinite(q.y));
+                    if (pts.length < 2) return;
+                    path = polyPath(pts) + ' h';
+                } else if (el.tagName === 'circle') {
+                    path = oval(parseFloat(el.getAttribute('cx')), parseFloat(el.getAttribute('cy')), parseFloat(el.getAttribute('r')), parseFloat(el.getAttribute('r')));
+                } else if (el.tagName === 'ellipse') {
+                    path = oval(parseFloat(el.getAttribute('cx')), parseFloat(el.getAttribute('cy')), parseFloat(el.getAttribute('rx')), parseFloat(el.getAttribute('ry')));
+                } else if (el.tagName === 'path') {
+                    // Les arcs des cylindres et cônes sont échantillonnés par le
+                    // navigateur : plus robuste que de réimplémenter la conversion.
+                    let len = 0;
+                    try { len = el.getTotalLength(); } catch (err) { return; }
+                    if (!len) return;
+                    const steps = Math.max(8, Math.min(240, Math.ceil(len / 2)));
+                    const sampled = [];
+                    for (let i = 0; i <= steps; i++) { const q = el.getPointAtLength(len * i / steps); sampled.push({ x: q.x, y: q.y }); }
+                    path = polyPath(sampled);
+                }
+                if (!path) return;
+                if (isPattern && pts) hatch(pts, rawFill.includes('cross'), strokeCol || '0 0.478 1');
+                ops.push('q');
+                if (fillCol && alpha > 0 && alpha < 1) ops.push(`/${gs(alpha)} gs`);
+                if (fillCol) ops.push(`${fillCol} rg`);
+                if (strokeCol) ops.push(`${strokeCol} RG ${n(sw)} w ${dash}`);
+                ops.push(path + ' ' + (fillCol && strokeCol ? 'B' : fillCol ? 'f' : 'S'));
+                ops.push('Q');
+            });
+
+            const stream = ops.join('\n');
+            const extg = [...alphas.entries()].map(([a, name]) => `/${name}<</Type/ExtGState/ca ${a}/CA ${a}>>`).join('');
+            const objs = [
+                '<</Type/Catalog/Pages 2 0 R>>',
+                '<</Type/Pages/Kids[3 0 R]/Count 1>>',
+                `<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${n(box.w * S)} ${n(box.h * S)}]/Resources<</Font<</F1 5 0 R>>/ExtGState<<${extg}>>>>/Contents 4 0 R>>`,
+                `<</Length ${stream.length}>>\nstream\n${stream}\nendstream`,
+                '<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>',
+            ];
+            let pdf = '%PDF-1.4\n';
+            const offsets = [];
+            objs.forEach((o, i) => { offsets.push(pdf.length); pdf += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+            const xref = pdf.length;
+            pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`
+                + offsets.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('')
+                + `trailer\n<</Size ${objs.length + 1}/Root 1 0 R>>\nstartxref\n${xref}\n%%EOF\n`;
+            this.download(new Blob([pdf], { type: 'application/pdf' }), 'figure_geomaster.pdf');
+            this.toast("PDF vectoriel exporté !");
         }
         /* Rend la figure sur un canevas. `scale` > 1 donne une image nette une fois
            collée dans un document ou projetée. */
@@ -2560,6 +2700,7 @@ getCleanSVGString() {
             document.querySelectorAll('.btn, .h-btn').forEach(x => { if (x.id !== 'btn-magnet-ui' && x.id !== 'btn-names-ui') x.classList.remove('active'); });
             if (b) b.classList.add('active'); this.updateBuildBar(); if (m === 'select') { this.viewport.classList.add('mode-select'); this.viewport.classList.remove('mode-eraser'); this.viewport.classList.remove('mode-pan_tool'); this.toast("Mode Édition"); this.renderAll(); return; }
             if (m === 'eraser') { this.viewport.classList.add('mode-eraser'); this.toast("Mode Gomme"); return; }
+            if (m === 'coding') { this.viewport.classList.remove('mode-select', 'mode-eraser', 'mode-pan_tool'); this.toast("Codage : touchez une arête"); this.renderAll(); return; }
             if (m === 'pan_tool') { this.viewport.classList.add('mode-pan_tool'); this.toast("Mode Déplacement"); return; }
             this.viewport.classList.remove('mode-select'); this.viewport.classList.remove('mode-eraser'); this.viewport.classList.remove('mode-pan_tool'); this.toast("Mode Création activé"); this.renderAll();
         }
@@ -2580,7 +2721,10 @@ getCleanSVGString() {
         renameText(e) { e.stopPropagation(); const g = e.target.closest('g'); if (g) { const s = this.solids.find(x => x.id == g.getAttribute('data-id')); if (s instanceof FreeText) { this.showInlineInput(s.p.x, s.p.y, s.text, (val) => { if (val) { this.saveState(); s.text = val; this.renderAll(); } }); } } }
         onClick(e) {
             this.queueBuildBar();
-            if (this.mode === 'select' || this.mode === 'eraser' || this.mode === 'pan_tool' || !this.mode) return; const p = this.getMouse(e);
+            // 'coding' agit uniquement sur les arêtes, via onEdgeDown. Sans cette
+            // exclusion, un clic à côté d'une arête enchaînait les étapes du cône.
+            if (!this.mode || ['select', 'eraser', 'pan_tool', 'coding'].includes(this.mode)) return;
+            const p = this.getMouse(e);
             if (this.mode === 'text') { this.showInlineInput(p.x, p.y, "", (val) => { if (val) { this.saveState(); this.solids.push(new FreeText(p, val)); this.finish(); } }); return; }
             if (this.mode === 'free_point') {
                 const existing = this.findSolidVertexAt(p);
@@ -2658,7 +2802,7 @@ getCleanSVGString() {
                 const group = e.target.closest('g.solid-group');
                 if (group) { const sid = group.getAttribute('data-id'); let changed = false; this.solids.forEach(s => { if (s.id == sid) { if (!s.selected) { s.selected = true; changed = true; } } else { if (s.selected) { s.selected = false; changed = true; } } }); if (changed) this.renderAll(); } else { this.deselectAll(); }
             }
-            if (!this.mode || this.mode === 'select' || this.mode === 'eraser' || this.mode === 'pan_tool') return;
+            if (!this.mode || ['select', 'eraser', 'pan_tool', 'coding'].includes(this.mode)) return;
             this.lGhost.innerHTML = '';
             // Avant le premier point il n'y a pas encore de forme à prévisualiser :
             // seule compte la position visée. C'est aussi le cas permanent du
